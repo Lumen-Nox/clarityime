@@ -33,9 +33,16 @@ Built-in profiles: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved 
 
 ## Quick start
 
+Default install gives **clarify**, **demo**, and **serve** with no ASR or global hotkeys — only `rich` is required, and works on Linux, macOS, and Windows.
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -e .
+
+# Optional extras (install only what you need):
+# pip install -e ".[asr]"      # local Whisper + microphone capture
+# pip install -e ".[desktop]"  # global hotkey + clipboard paste (clarityime run)
+# pip install -e ".[all]"    # everything above
 
 # Start the local API (loopback only)
 clarityime serve
@@ -50,7 +57,7 @@ clarityime demo
 .\.venv\Scripts\python.exe -m unittest discover tests -v
 ```
 
-On Linux/macOS, use `python3 -m venv .venv` and `source .venv/bin/activate` instead.
+On Linux/macOS, use `python3 -m venv .venv` and `source .venv/bin/activate` instead. For full dev dependencies (ASR + desktop), use `pip install -r requirements.txt` or `pip install -e ".[all]"`.
 
 Set `CLARITYIME_DATA_DIR` to override where contacts, settings, and consent are stored (default: `~/.clarityime/data` in development).
 

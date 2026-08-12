@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import time
 
-import keyboard
-import pyperclip
+from clarityime.optional_deps import require_desktop
 
 
 def apply_text(
@@ -24,6 +23,10 @@ def apply_text(
     """
     if not text:
         return "clipboard_only"
+
+    require_desktop("Clipboard paste apply")
+    import keyboard
+    import pyperclip
 
     if mode == "clipboard_only":
         pyperclip.copy(text)

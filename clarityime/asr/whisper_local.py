@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 from pathlib import Path
-
-import numpy as np
+from typing import Any
 
 from clarityime.models import AsrCandidate, AsrResult
+from clarityime.optional_deps import require_asr
 
 
 class WhisperLocalAsr:
@@ -25,6 +25,7 @@ class WhisperLocalAsr:
 
     def _load(self):
         if self._model is None:
+            require_asr("Local Whisper ASR")
             from faster_whisper import WhisperModel
 
             self._model = WhisperModel(
@@ -54,7 +55,7 @@ class WhisperLocalAsr:
 
     def transcribe_array(
         self,
-        audio: np.ndarray,
+        audio: Any,
         sample_rate: int = 16000,
         language: str | None = None,
     ) -> AsrResult:

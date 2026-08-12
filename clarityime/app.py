@@ -4,20 +4,21 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-import keyboard
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from clarityime.apply.inject import apply_text
-from clarityime.asr.whisper_local import WhisperLocalAsr
-from clarityime.audio import record_until_silence, save_wav
 from clarityime.clarify.engine import clarify
 from clarityime.models import AudienceMode, ClarifyRequest, parse_audience_mode
+from clarityime.optional_deps import require_asr, require_desktop
 from clarityime.settings import load_settings
 from clarityime.storage.contacts import ContactStore
 from clarityime.storage.speaker import SpeakerStore
+
+if TYPE_CHECKING:
+    from clarityime.asr.whisper_local import WhisperLocalAsr
 
 console = Console()
 
@@ -34,13 +35,21 @@ class ClarityApp:
         self.mode = mode or parse_audience_mode(raw_audience)
         self.contact_name = contact_name or self.settings.get("default_contact")
         self.hotkey = self.settings.get("hotkey", "ctrl+shift+space")
-        self.asr = WhisperLocalAsr(
-            model_size=model_size or self.settings.get("whisper_model", "base")
-        )
+        self._model_size = model_size or self.settings.get("whisper_model", "base")
+        self._asr: WhisperLocalAsr | None = None
         self.contacts = ContactStore()
         self.speaker = SpeakerStore()
         self._busy = False
         self._record_dir = Path(__file__).resolve().parents[1] / "data" / "recordings"
+
+    @property
+    def asr(self) -> WhisperLocalAsr:
+        if self._asr is None:
+            require_asr("Voice hotkey workflow")
+            from clarityime.asr.whisper_local import WhisperLocalAsr
+
+            self._asr = WhisperLocalAsr(model_size=self._model_size)
+        return self._asr
 
     def _resolve_contact(self):
         if self.mode != AudienceMode.CONTACT:
@@ -59,6 +68,11 @@ class ClarityApp:
             return
         self._busy = True
         try:
+            require_asr("Voice hotkey workflow")
+            require_desktop("Auto-apply after clarify")
+            from clarityime.apply.inject import apply_text
+            from clarityime.audio import record_until_silence, save_wav
+
             console.print("[cyan]🎤 Listening… (pause to finish)[/]")
             audio = record_until_silence()
             if audio.size == 0:
@@ -92,7 +106,7 @@ class ClarityApp:
         finally:
             self._busy = False
 
-    def _show_result(self, asr_result, clarify_result) -> None:
+    def _show_result(self, asr_result: Any, clarify_result: Any) -> None:
         table = Table(title="ClarityIME — Raw vs Clarified", show_header=True)
         table.add_column("Field", style="cyan")
         table.add_column("Content")
@@ -112,6 +126,9 @@ class ClarityApp:
         console.print(Panel(table, border_style="magenta"))
 
     def run_hotkey_loop(self) -> None:
+        require_desktop("Hotkey mode")
+        import keyboard
+
         console.print(
             Panel(
                 f"[bold]ClarityIME[/] — 意思清晰化层（非润色输入法）\n"

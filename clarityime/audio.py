@@ -5,9 +5,9 @@ from __future__ import annotations
 import time
 import wave
 from pathlib import Path
+from typing import Any
 
-import numpy as np
-import sounddevice as sd
+from clarityime.optional_deps import require_asr
 
 
 def record_until_silence(
@@ -15,11 +15,15 @@ def record_until_silence(
     max_seconds: float = 30.0,
     silence_threshold: float = 0.015,
     silence_duration: float = 1.2,
-) -> np.ndarray:
+) -> Any:
     """Record from default mic; stop after sustained silence or max duration."""
+    require_asr("Microphone capture")
+    import numpy as np
+    import sounddevice as sd
+
     block = int(sample_rate * 0.1)
     max_blocks = int(max_seconds / 0.1)
-    chunks: list[np.ndarray] = []
+    chunks: list[Any] = []
     silent_blocks = 0
     needed_silent = int(silence_duration / 0.1)
 
@@ -40,7 +44,10 @@ def record_until_silence(
     return np.concatenate(chunks)
 
 
-def save_wav(audio: np.ndarray, path: Path, sample_rate: int = 16000) -> None:
+def save_wav(audio: Any, path: Path, sample_rate: int = 16000) -> None:
+    require_asr("Saving WAV recordings")
+    import numpy as np
+
     path.parent.mkdir(parents=True, exist_ok=True)
     pcm = np.clip(audio, -1.0, 1.0)
     pcm16 = (pcm * 32767).astype(np.int16)
@@ -51,7 +58,10 @@ def save_wav(audio: np.ndarray, path: Path, sample_rate: int = 16000) -> None:
         wf.writeframes(pcm16.tobytes())
 
 
-def record_fixed(seconds: float = 5.0, sample_rate: int = 16000) -> np.ndarray:
+def record_fixed(seconds: float = 5.0, sample_rate: int = 16000) -> Any:
+    require_asr("Microphone capture")
+    import sounddevice as sd
+
     frames = int(seconds * sample_rate)
     data = sd.rec(frames, samplerate=sample_rate, channels=1, dtype="float32")
     sd.wait()

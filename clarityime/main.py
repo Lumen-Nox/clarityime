@@ -7,9 +7,9 @@ import json
 import sys
 
 from rich.console import Console
+from rich.markup import escape
 
 from clarityime import __version__
-from clarityime.app import ClarityApp
 from clarityime.clarify.engine import clarify
 from clarityime.clarify.local_rules import clarify_default
 from clarityime.consent import load_consent, save_consent
@@ -180,8 +180,16 @@ def cmd_capture(args: argparse.Namespace) -> int:
     """Record + ASR only; JSON stdout for platform shells (Windows tray, etc.)."""
     import json
 
-    from clarityime.asr.whisper_local import WhisperLocalAsr
-    from clarityime.audio import record_fixed, record_until_silence
+    from clarityime.optional_deps import OptionalDependencyError, require_asr
+
+    try:
+        require_asr("capture")
+        from clarityime.asr.whisper_local import WhisperLocalAsr
+        from clarityime.audio import record_fixed, record_until_silence
+    except OptionalDependencyError as exc:
+        console.print(f"[red]Error:[/] {escape(str(exc))}")
+        return 1
+
     from clarityime.settings import load_settings
 
     settings = load_settings()
@@ -215,6 +223,8 @@ def cmd_capture(args: argparse.Namespace) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
+    from clarityime.app import ClarityApp
+
     console.print(
         "[yellow]Tip: production use → `clarityime serve` + platform IME keyboard.[/]"
     )
@@ -342,7 +352,8 @@ def main(argv: list[str] | None = None) -> int:
         console.print("\n[yellow]Interrupted.[/]")
         return 130
     except Exception as exc:  # noqa: BLE001
-        console.print(f"[red]Error:[/] {exc}")
+        # escape(): extras hints like clarityime[desktop] are valid rich markup
+        console.print(f"[red]Error:[/] {escape(str(exc))}")
         return 1
 
 

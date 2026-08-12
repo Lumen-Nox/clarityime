@@ -1,12 +1,14 @@
-# ClarityIME — Windows MVP dependencies
-# Install: pip install -r requirements.txt
+# ClarityIME — full dev / demo install (= pip install -e ".[all]")
+# Minimal clarify + serve only: pip install -e .
+# ASR only: pip install -e ".[asr]"
+# Desktop hotkeys + clipboard: pip install -e ".[desktop]"
 
+rich>=13.7.0
 faster-whisper>=1.1.0
 numpy>=1.24.0
 sounddevice>=0.4.6
 keyboard>=0.13.5
 pyperclip>=1.8.2
-rich>=13.7.0
 
 # Optional cloud LLM polish (user must opt in)
 # openai>=1.0.0
