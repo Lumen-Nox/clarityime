@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+data/
+*.db
+*.token
+*.wrapped
+bin/
+obj/
+.gradle/
+local.properties
+tests/_*.txt

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>ClarityIMETSF</AssemblyName>
+    <RootNamespace>ClarityIMETSF</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <EnableComHosting>true</EnableComHosting>
+    <EnableRegFreeCom>false</EnableRegFreeCom>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Description>ClarityIME Windows TSF Text Input Processor (voice clarify IME)</Description>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+</Project>

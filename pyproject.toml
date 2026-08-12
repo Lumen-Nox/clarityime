@@ -1,0 +1,27 @@
+[project]
+name = "clarityime"
+version = "0.4.0"
+description = "Integrated voice-clarity input method (IME) — speech clarify inside IME via built-in ASR + audience-targeted clarification"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "faster-whisper>=1.1.0",
+  "numpy>=1.24.0",
+  "sounddevice>=0.4.6",
+  "keyboard>=0.13.5",
+  "pyperclip>=1.8.2",
+  "rich>=13.7.0",
+]
+
+[project.scripts]
+clarityime = "clarityime.main:main"
+clarityime-serve = "clarityime.server:run_server"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["clarityime*"]

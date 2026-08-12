@@ -1,0 +1,12 @@
+# ClarityIME — Windows MVP dependencies
+# Install: pip install -r requirements.txt
+
+faster-whisper>=1.1.0
+numpy>=1.24.0
+sounddevice>=0.4.6
+keyboard>=0.13.5
+pyperclip>=1.8.2
+rich>=13.7.0
+
+# Optional cloud LLM polish (user must opt in)
+# openai>=1.0.0

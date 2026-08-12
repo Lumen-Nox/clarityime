@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/clarity_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ClarityIME"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="本地规则清晰化 · 不调用在线模型"
+            android:textSize="13sp"
+            android:textColor="@color/clarity_text_secondary"
+            android:paddingBottom="12dp" />
+
+        <TextView
+            android:id="@+id/core_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:text="Core: checking…"
+            android:textColor="@color/clarity_text_secondary" />
+
+        <Button
+            android:id="@+id/btn_refresh_core"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="刷新连接状态"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/clarity_accent" />
+
+        <Button
+            android:id="@+id/btn_show_onboarding"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="重新查看引导"
+            android:textAllCaps="false"
+            android:textColor="@color/clarity_accent" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="面向对象"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary" />
+
+        <Spinner
+            android:id="@+id/spinner_mode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="联系人（contact 模式）"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary" />
+
+        <Spinner
+            android:id="@+id/spinner_contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="24dp"
+            android:text="联系人列表"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/clarity_text_primary" />
+
+        <LinearLayout
+            android:id="@+id/contact_list_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingTop="8dp">
+
+            <Button
+                android:id="@+id/btn_export_contact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="导出 JSON"
+                android:textAllCaps="false" />
+
+            <Button
+                android:id="@+id/btn_import_contact"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="从文件导入"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="添加 / 更新联系人"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="姓名"
+            android:textSize="12sp"
+            android:textColor="@color/clarity_text_secondary" />
+
+        <EditText
+            android:id="@+id/edit_contact_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="必填"
+            android:inputType="textPersonName" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="关系"
+            android:textSize="12sp"
+            android:textColor="@color/clarity_text_secondary" />
+
+        <EditText
+            android:id="@+id/edit_contact_relation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="如：老师、朋友"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="风格 / 标签"
+            android:textSize="12sp"
+            android:textColor="@color/clarity_text_secondary" />
+
+        <EditText
+            android:id="@+id/edit_contact_style"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="对方偏好的表达方式"
+            android:inputType="text" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="常误解你的地方"
+            android:textSize="12sp"
+            android:textColor="@color/clarity_text_secondary" />
+
+        <EditText
+            android:id="@+id/edit_contact_comprehension"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="理解备注"
+            android:inputType="textMultiLine"
+            android:minLines="2" />
+
+        <Button
+            android:id="@+id/btn_add_contact"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="保存联系人"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/clarity_accent" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="沟通偏好"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="清晰" android:textSize="12sp" android:textColor="@color/clarity_text_secondary" />
+        <SeekBar android:id="@+id/seek_cerome_clarity" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="70" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="温和" android:textSize="12sp" android:textColor="@color/clarity_text_secondary" />
+        <SeekBar android:id="@+id/seek_cerome_warmth" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="50" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="效率" android:textSize="12sp" android:textColor="@color/clarity_text_secondary" />
+        <SeekBar android:id="@+id/seek_cerome_efficiency" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="50" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="精确" android:textSize="12sp" android:textColor="@color/clarity_text_secondary" />
+        <SeekBar android:id="@+id/seek_cerome_precision" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="50" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="幽默" android:textSize="12sp" android:textColor="@color/clarity_text_secondary" />
+        <SeekBar android:id="@+id/seek_cerome_humor" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="35" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="8dp" android:text="当前状态" android:textSize="12sp" android:textColor="@color/clarity_text_secondary" />
+        <Spinner android:id="@+id/spinner_cerome_mood" android:layout_width="match_parent" android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="本地 API 令牌"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary" />
+
+        <EditText
+            android:id="@+id/edit_api_token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="来自 data/.local_api_token"
+            android:inputType="textPassword" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="24dp"
+            android:text="语音识别语言"
+            android:textStyle="bold"
+            android:textColor="@color/clarity_text_primary" />
+
+        <Spinner
+            android:id="@+id/spinner_asr_lang"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp" />
+
+        <CheckBox
+            android:id="@+id/check_auto_apply_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:text="一键发送推荐（跳过候选条）" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="24dp"
+            android:text="隐私"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/clarity_text_primary" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:text="清晰化在本地完成。以下选项默认关闭。"
+            android:textSize="12sp"
+            android:textColor="@color/clarity_text_secondary" />
+
+        <CheckBox
+            android:id="@+id/check_cloud_sync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="8dp"
+            android:text="加密备份（可选）" />
+
+        <CheckBox
+            android:id="@+id/check_aggregate_research"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="匿名聚合研究（不含原文）" />
+
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="保存"
+            android:textAllCaps="false"
+            android:backgroundTint="@color/clarity_accent" />
+    </LinearLayout>
+</ScrollView>

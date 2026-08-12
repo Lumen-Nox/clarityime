@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="clarity_bg">#FAFAFC</color>
+    <color name="clarity_surface">#FFFFFF</color>
+    <color name="clarity_accent">#2D6A9E</color>
+    <color name="clarity_accent_light">#E8F0F8</color>
+    <color name="clarity_text_primary">#1A1A1A</color>
+    <color name="clarity_text_secondary">#666666</color>
+    <color name="clarity_text_muted">#999999</color>
+    <color name="clarity_success_bg">#EDF6EF</color>
+    <color name="clarity_success_border">#81B29A</color>
+    <color name="clarity_danger">#C62828</color>
+    <color name="clarity_divider">#E8E8EC</color>
+</resources>
