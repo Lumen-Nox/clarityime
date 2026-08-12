@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from clarityime.models import SpeakerProfile
@@ -25,7 +26,7 @@ class SpeakerStore:
         return conn
 
     def _init_db(self) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS speaker (
@@ -44,7 +45,7 @@ class SpeakerStore:
             )
 
     def get(self) -> SpeakerProfile:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute("SELECT * FROM speaker WHERE id = 1").fetchone()
         log_raw = row["correction_log"] or ""
         if not log_raw or log_raw == "[]":
@@ -72,7 +73,7 @@ class SpeakerStore:
     def update(self, profile: SpeakerProfile) -> SpeakerProfile:
         log_stored = seal_json(profile.correction_log) if profile.correction_log else "[]"
         extra_stored = seal_json(profile.extra) if profile.extra else "{}"
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 """
                 UPDATE speaker SET display_name=?, oral_patterns=?, vague_phrases=?,

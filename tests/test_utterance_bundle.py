@@ -70,6 +70,8 @@ class UtteranceBundleApiTests(unittest.TestCase):
         bundle_mod._BUNDLES_ROOT = root / "bundles"
         speaker_mod.DEFAULT_DB = root / "speaker.db"
         cls._httpd = ThreadingHTTPServer(("127.0.0.1", 0), ClarityHandler)
+        cls._httpd.daemon_threads = False
+        cls._httpd.block_on_close = True
         cls._port = cls._httpd.server_address[1]
         cls._thread = threading.Thread(target=cls._httpd.serve_forever, daemon=True)
         cls._thread.start()
@@ -77,6 +79,7 @@ class UtteranceBundleApiTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         cls._httpd.shutdown()
+        cls._thread.join(timeout=10)
         cls._httpd.server_close()
         bundle_mod._BUNDLES_ROOT = None
         cls._tmpdir.cleanup()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from clarityime.models import ContactProfile
@@ -26,7 +27,7 @@ class ContactStore:
         return conn
 
     def _init_db(self) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS contacts (
@@ -43,19 +44,19 @@ class ContactStore:
             )
 
     def list_contacts(self) -> list[ContactProfile]:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             rows = conn.execute("SELECT * FROM contacts ORDER BY name").fetchall()
         return [self._row_to_profile(r) for r in rows]
 
     def get_by_name(self, name: str) -> ContactProfile | None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute(
                 "SELECT * FROM contacts WHERE name = ?", (name,)
             ).fetchone()
         return self._row_to_profile(row) if row else None
 
     def get_by_id(self, contact_id: int) -> ContactProfile | None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             row = conn.execute(
                 "SELECT * FROM contacts WHERE id = ?", (contact_id,)
             ).fetchone()
@@ -70,7 +71,7 @@ class ContactStore:
         cerome_blob = seal_json(extra.get("cerome")) if extra.get("cerome") else ""
         stored_extra = {"_sealed": extra_blob, "_cerome_sealed": cerome_blob}
         words_stored = seal_text(profile.preferred_words) if profile.preferred_words else ""
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             if profile.id is None:
                 cur = conn.execute(
                     """
@@ -147,7 +148,7 @@ class ContactStore:
         return self.upsert(profile)
 
     def delete(self, contact_id: int) -> None:
-        with self._connect() as conn:
+        with closing(self._connect()) as conn, conn:
             conn.execute("DELETE FROM contacts WHERE id = ?", (contact_id,))
 
     @staticmethod
