@@ -32,7 +32,7 @@ The tray host is **not** a replacement for TSF: it is a **development-friendly h
 From PowerShell (admin **not** required for tray install):
 
 ```powershell
-cd platforms\windows
+cd code-ClarityIME\platforms\windows
 .\install.ps1
 ```
 
@@ -54,9 +54,8 @@ clarityime --version      # bundled exe or venv CLI
 
 Bundled core build (optional, no Python needed at runtime):
 
-From the repository root:
-
 ```powershell
+cd code-ClarityIME
 .\scripts\build_core.ps1
 .\platforms\windows\install.ps1
 ```
@@ -84,7 +83,7 @@ Prerequisites for TSF: **`install.ps1` already done** (core reachable), **.NET 8
 
 ```powershell
 # Administrator PowerShell
-cd platforms\windows
+cd code-ClarityIME\platforms\windows
 .\install-tsf.ps1
 ```
 
@@ -100,12 +99,18 @@ Details: `ClarityIMETSF/README.md` · debug log: `%LOCALAPPDATA%\ClarityIME\tsf-
 
 Validates host artifact (optional build), core `--version`, live **`serve`**, and HTTP API — **not** Typeless or external dictation tools:
 
-From the repository root:
-
 ```powershell
-.\scripts\smoke_core.ps1
-.\scripts\e2e_pipeline.ps1
+cd code-ClarityIME
+.\scripts\windows_smoke.ps1
 ```
+
+Steps inside the script:
+
+1. Build **`clarityime-host.exe`** via `platforms\windows\build.ps1` if missing (`-SkipHostBuild` to skip).
+2. Verify **`platforms\windows\dist\clarityime-core.exe --version`** **or** `.venv\Scripts\python.exe -m clarityime --version`.
+3. Start core in the background (`serve --host 127.0.0.1 --port 17800`).
+4. **`GET /v1/health`** and **`POST /v1/candidates`** (sample text).
+5. Stop the core process.
 
 ---
 

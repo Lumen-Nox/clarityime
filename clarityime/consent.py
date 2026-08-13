@@ -1,4 +1,4 @@
-"""Explicit local consent for optional data sharing."""
+"""Explicit local consent — opt-in cloud sync and aggregate research flags."""
 
 from __future__ import annotations
 

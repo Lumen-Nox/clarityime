@@ -1,4 +1,4 @@
-# ClarityIME · Integrated IME architecture (v0.4)
+# ClarityIME · Integrated IME architecture (v0.5)
 
 ## Core principle
 
@@ -32,7 +32,7 @@ ClarityIME is an **integrated input method**, not a floating dictation overlay. 
 | `scripts/smoke_core.ps1` | Dev | venv core · `:17899` health + candidates |
 | `scripts/e2e_pipeline.ps1` | Dev | End-to-end API pipeline smoke |
 
-This open-source slice includes **Windows and Android** platform shells only.
+This open-source slice ships **Windows and Android** as the supported IME shells. Linux (IBus/fcitx5), macOS, and iOS trees are included as source; they are not required to run `clarityime demo`.
 
 ## HTTP API (`clarityime serve`)
 

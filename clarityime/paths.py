@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def app_data_dir() -> Path:
-    """Persistent data dir: ``~/.clarityime/data`` in dev (override with ``CLARITYIME_DATA_DIR``); ``CLARITYIME_ROOT/data`` when frozen."""
+    """Persistent data dir: repo ``data/`` in dev; ``CLARITYIME_ROOT/data`` when frozen."""
     override = os.environ.get("CLARITYIME_DATA_DIR")
     if override:
         return Path(override)
@@ -17,4 +17,4 @@ def app_data_dir() -> Path:
         if root:
             return Path(root) / "data"
         return Path.home() / ".clarityime" / "data"
-    return Path.home() / ".clarityime" / "data"
+    return Path(__file__).resolve().parents[1] / "data"

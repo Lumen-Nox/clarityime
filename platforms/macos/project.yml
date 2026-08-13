@@ -1,0 +1,82 @@
+name: ClarityIME
+options:
+  bundleIdPrefix: com.clarityime
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+
+targets:
+  ClarityCore:
+    type: framework
+    platform: macOS
+    sources:
+      - ClarityCore
+    settings:
+      base:
+        PRODUCT_NAME: ClarityCore
+        PRODUCT_BUNDLE_IDENTIFIER: com.clarityime.core
+        DEFINES_MODULE: YES
+        SKIP_INSTALL: YES
+
+  ClarityIME:
+    type: application
+    platform: macOS
+    sources:
+      - path: ClarityIME
+        excludes:
+          - Info.plist
+    dependencies:
+      - target: ClarityCore
+        embed: true
+    settings:
+      base:
+        PRODUCT_NAME: ClarityIME
+        PRODUCT_BUNDLE_IDENTIFIER: com.clarityime
+        INFOPLIST_FILE: ClarityIME/Info.plist
+        CODE_SIGN_ENTITLEMENTS: ClarityIME/ClarityIME.entitlements
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/../Frameworks"
+        OTHER_LDFLAGS: "-framework InputMethodKit -framework AppKit"
+        GENERATE_INFOPLIST_FILE: NO
+        ENABLE_HARDENED_RUNTIME: YES
+        COMBINE_HIDPI_IMAGES: YES
+        CURRENT_PROJECT_VERSION: 1
+        MARKETING_VERSION: 0.3.0
+    scheme:
+      testTargets:
+        - ClarityIMETests
+
+  ClarityIMETests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - ClarityIMETests
+    dependencies:
+      - target: ClarityCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.clarityime.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  ClarityIME:
+    build:
+      targets:
+        ClarityIME: all
+        ClarityCore: all
+    test:
+      targets:
+        - ClarityIMETests
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

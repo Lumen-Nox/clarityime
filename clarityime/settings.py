@@ -19,6 +19,10 @@ DEFAULT_SETTINGS = {
     "show_confirmation": False,
     "auto_apply_top": False,
     "restore_clipboard_after_apply": True,
+    # Every for_listener message carries a "see original" link by default —
+    # Default: most-friendly adaptation for the reader. User can switch to a
+    # link-free "clean" copy in settings.
+    "attach_original_link": True,
 }
 
 SETTINGS_PATH = app_data_dir() / "settings.json"

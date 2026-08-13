@@ -89,7 +89,7 @@ Offline fallback: `ClarifyRules` when core is not reachable.
 Run in Termux:
 
 ```bash
-pip install -e .
+pip install -e /path/to/code-ClarityIME
 clarityime serve
 ```
 

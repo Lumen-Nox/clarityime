@@ -24,15 +24,12 @@ class FeedbackSpeakerTests(unittest.TestCase):
         speaker_mod.DEFAULT_DB = self._db
         self._store = SpeakerStore(self._db)
         self._httpd = ThreadingHTTPServer(("127.0.0.1", 0), ClarityHandler)
-        self._httpd.daemon_threads = False
-        self._httpd.block_on_close = True
         self._port = self._httpd.server_address[1]
         self._thread = threading.Thread(target=self._httpd.serve_forever, daemon=True)
         self._thread.start()
 
     def tearDown(self) -> None:
         self._httpd.shutdown()
-        self._thread.join(timeout=10)
         self._httpd.server_close()
         self._tmpdir.cleanup()
 
@@ -74,6 +71,36 @@ class FeedbackSpeakerTests(unittest.TestCase):
         self.assertEqual(len(feedback_log), 1)
         self.assertEqual(feedback_log[0]["raw"], raw)
         self.assertEqual(feedback_log[0]["note"], note)
+
+    def test_adapt_rating_is_logged_separately_from_asr_corrections(self) -> None:
+        body = json.dumps(
+            {
+                "original": "监管者一直守椅",
+                "for_listener": "追人的一方一直守着倒地的人不走。",
+                "rating": "bad",
+                "note": "守椅翻得太绕了",
+                "substitutions": [{"src": "监管者", "dst": "追人的一方"}],
+                "listener_tags": ["mbti_entp"],
+            },
+            ensure_ascii=False,
+        ).encode("utf-8")
+        req = urllib.request.Request(
+            f"http://127.0.0.1:{self._port}/v1/feedback",
+            data=body,
+            headers={"Content-Type": "application/json", **auth_headers(self._token)},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        self.assertTrue(payload["ok"])
+        profile = self._store.get()
+        # Must not pollute the ASR correction log.
+        self.assertEqual(profile.correction_log, [])
+        ratings = profile.extra.get("adapt_rating_log", [])
+        self.assertEqual(len(ratings), 1)
+        self.assertEqual(ratings[0]["rating"], "bad")
+        self.assertEqual(ratings[0]["note"], "守椅翻得太绕了")
+        self.assertEqual(ratings[0]["listener_tags"], ["mbti_entp"])
 
     def test_log_correction_direct(self) -> None:
         store = SpeakerStore(self._db)

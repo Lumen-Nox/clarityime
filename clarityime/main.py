@@ -257,7 +257,7 @@ def cmd_serve(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="clarityime",
-        description="ClarityIME — voice clarity overlay (practice project)",
+        description="ClarityIME — audience comprehension inside the input method",
     )
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -288,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     pol.add_argument("--contact")
     pol.set_defaults(func=cmd_clarify_text)
 
-    ct = sub.add_parser("contacts", help="Audience objects (面向对象) — local SQLite")
+    ct = sub.add_parser("contacts", help="Audience objects — local SQLite")
     ct_sub = ct.add_subparsers(dest="action", required=True)
     ct_sub.add_parser("list").set_defaults(func=cmd_contacts)
     add = ct_sub.add_parser("add")
@@ -352,7 +352,6 @@ def main(argv: list[str] | None = None) -> int:
         console.print("\n[yellow]Interrupted.[/]")
         return 130
     except Exception as exc:  # noqa: BLE001
-        # escape(): extras hints like clarityime[desktop] are valid rich markup
         console.print(f"[red]Error:[/] {escape(str(exc))}")
         return 1
 

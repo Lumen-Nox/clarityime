@@ -13,3 +13,7 @@ obj/
 .gradle/
 local.properties
 tests/_*.txt
+platforms/windows/dist-tsf/
+platforms/DEVICE_E2E.md
+
+

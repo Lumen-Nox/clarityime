@@ -1,3 +1,3 @@
-"""ClarityIME — integrated voice-clarity input method."""
+"""ClarityIME — voice overlay clarity layer (practice project, not a commercial IME)."""
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

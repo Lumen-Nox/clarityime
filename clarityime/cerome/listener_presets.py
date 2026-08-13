@@ -1,16 +1,13 @@
 """Cerome listener presets — how *this person* parses speech (not how speaker should talk).
 
-MBTI labels below are optional comprehension priors only (observer lens).
+Refs: PAT Cerome framework; MBTI as comprehension prior only (observer lens).
 
 | Key | Archetype | Easier to parse when… |
 |-----|-----------|------------------------|
-| analytical / intj | INTJ (Ni–Te) | Causal chain visible; one claim per line; low social padding |
-| warm_flow / infp | INFP (Fi–Ne) | Feeling + nuance stay in one flow; hedging kept visible |
-| fast_scan / entp | ENTP (Ne–Ti) | Short scannable lines; hooks / questions pop out |
-| narrative / infj | INFJ (Ni–Fe) | Meaning beats separated; context before pivot words |
-
-Legacy aliases ``d_type``, ``s_type``, ``a_type``, ``i_type`` (and short ``d``/``s``/``a``/``i``)
-still resolve to the primary names above.
+| intj / d_type | INTJ (Ni–Te) | Causal chain visible; one claim per line; low social padding |
+| s_type | INFP (Fi–Ne) | Feeling + nuance stay in one flow; hedging kept visible |
+| a_type | ENTP (Ne–Ti) | Short scannable lines; hooks / questions pop out |
+| i_type | INFJ (Ni–Fe) | Meaning beats separated; context before pivot words |
 """
 
 from __future__ import annotations
@@ -23,24 +20,25 @@ from clarityime.cerome.human import (
     CeromeL4Context,
     CeromeL5Mood,
 )
+from clarityime.cerome.tags import validate
 
 LISTENER_PRESET_ALIASES: dict[str, str] = {
-    "intj": "analytical",
-    "d": "analytical",
-    "d_type": "analytical",
-    "analytical": "analytical",
-    "s": "warm_flow",
-    "s_type": "warm_flow",
-    "infp": "warm_flow",
-    "warm_flow": "warm_flow",
-    "a": "fast_scan",
-    "a_type": "fast_scan",
-    "entp": "fast_scan",
-    "fast_scan": "fast_scan",
-    "i": "narrative",
-    "i_type": "narrative",
-    "infj": "narrative",
-    "narrative": "narrative",
+    "intj": "d_type",
+    "d": "d_type",
+    "d_type": "d_type",
+    "analytical": "d_type",
+    "s": "s_type",
+    "s_type": "s_type",
+    "infp": "s_type",
+    "warm_flow": "s_type",
+    "a": "a_type",
+    "a_type": "a_type",
+    "entp": "a_type",
+    "fast_scan": "a_type",
+    "i": "i_type",
+    "i_type": "i_type",
+    "infj": "i_type",
+    "narrative": "i_type",
 }
 
 
@@ -61,7 +59,14 @@ def _profile(
     precision: float,
     comprehension: str,
     load_sensitivity: float = 0.55,
+    tags: tuple[str, ...] = (),
 ) -> CeromeHumanProfile:
+    """Build a preset.
+
+    ``tags`` may only contain **declared** facts. A personality preset must not
+    carry a domain tag: knowing someone is INTJ tells you nothing about whether
+    they know 「排期」. Domain tags are added per-contact by the user.
+    """
     profile = CeromeHumanProfile(
         l1=CeromeL1Comm(
             pace=pace,
@@ -75,7 +80,7 @@ def _profile(
             warmth=warmth,
             efficiency=efficiency,
             precision=precision,
-            humor=0.35 if tag == "fast_scan" else 0.25,
+            humor=0.35 if tag == "a_type" else 0.25,
         ),
         l3=CeromeL3Relational(
             comprehension_gaps=comprehension,
@@ -83,14 +88,15 @@ def _profile(
         ),
         l4=CeromeL4Context(formality=formality, stress=0.3, novelty=0.5),
         l5=CeromeL5Mood(label="steady"),
+        tags=list(validate(tags).sorted()),
     )
     PRESET_META[tag] = mbti
     return profile
 
 
-# analytical — logical scaffold, causal edges explicit, minimal emotional re-flow
-ANALYTICAL = _profile(
-    tag="analytical",
+# INTJ / D — logical scaffold, causal edges explicit, minimal emotional re-flow
+D_TYPE = _profile(
+    tag="d_type",
     mbti="INTJ",
     pace=0.55,
     formality=0.55,
@@ -101,12 +107,15 @@ ANALYTICAL = _profile(
     efficiency=0.88,
     precision=0.82,
     load_sensitivity=0.5,
+    # Personality only. No hobby / domain / source tag — those are things the
+    # user declares about a real person, not things "INTJ" tells us.
+    tags=("mbti_intj",),
     comprehension="先抓判断/请求，再读原因；讨厌猜隐含结论",
 )
 
-# warm_flow — keep speaker hedging & feeling words in one continuous voice
-WARM_FLOW = _profile(
-    tag="warm_flow",
+# INFP / S — keep speaker hedging & feeling words in one continuous voice
+S_TYPE = _profile(
+    tag="s_type",
     mbti="INFP",
     pace=0.42,
     formality=0.35,
@@ -117,12 +126,13 @@ WARM_FLOW = _profile(
     efficiency=0.32,
     precision=0.48,
     load_sensitivity=0.35,
+    tags=("mbti_infp",),
     comprehension="需要感受到态度和语气；不要拆成冷清单",
 )
 
-# fast_scan — punchy lines, options & questions stand out
-FAST_SCAN = _profile(
-    tag="fast_scan",
+# ENTP / A — punchy lines, options & questions stand out
+A_TYPE = _profile(
+    tag="a_type",
     mbti="ENTP",
     pace=0.72,
     formality=0.4,
@@ -133,12 +143,13 @@ FAST_SCAN = _profile(
     efficiency=0.82,
     precision=0.55,
     load_sensitivity=0.85,
+    tags=("mbti_entp",),
     comprehension="快速扫读；一句一线；问句要醒目",
 )
 
-# narrative — narrative beats, pivot words (但是/所以) get breathing room
-NARRATIVE = _profile(
-    tag="narrative",
+# INFJ / I — narrative beats, pivot words (但是/所以) get breathing room
+I_TYPE = _profile(
+    tag="i_type",
     mbti="INFJ",
     pace=0.48,
     formality=0.5,
@@ -149,6 +160,7 @@ NARRATIVE = _profile(
     efficiency=0.42,
     precision=0.58,
     load_sensitivity=0.45,
+    tags=("mbti_infj",),
     comprehension="先懂整体意思，再读转折；上下文不能丢",
 )
 
@@ -169,10 +181,10 @@ NEUTRAL = _profile(
 )
 
 PRESETS: dict[str, CeromeHumanProfile] = {
-    "analytical": ANALYTICAL,
-    "warm_flow": WARM_FLOW,
-    "fast_scan": FAST_SCAN,
-    "narrative": NARRATIVE,
+    "d_type": D_TYPE,
+    "s_type": S_TYPE,
+    "a_type": A_TYPE,
+    "i_type": I_TYPE,
 }
 
 

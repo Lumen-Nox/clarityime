@@ -1,4 +1,4 @@
-"""Local API security — loopback bind and token auth."""
+"""Local API security — loopback-only binding and token auth."""
 
 from __future__ import annotations
 

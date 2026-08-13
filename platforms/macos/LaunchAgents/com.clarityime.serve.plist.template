@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.clarityime.serve</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>@@CLARITYIME_VENV_PYTHON@@</string>
+        <string>-m</string>
+        <string>clarityime.main</string>
+        <string>serve</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>@@CLARITYIME_ROOT@@</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>CLARITYIME_ROOT</key>
+        <string>@@CLARITYIME_ROOT@@</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>@@CLARITYIME_ROOT@@/.clarityime-serve.log</string>
+    <key>StandardErrorPath</key>
+    <string>@@CLARITYIME_ROOT@@/.clarityime-serve.err.log</string>
+</dict>
+</plist>

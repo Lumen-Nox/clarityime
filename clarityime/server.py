@@ -6,6 +6,7 @@ GET  /v1/health
 GET  /v1/settings · POST /v1/settings
 GET  /v1/consent · POST /v1/consent
 GET  /v1/contacts · POST /v1/contacts · DELETE /v1/contacts?name=
+GET  /v1/contacts/suggestions
 GET  /v1/speaker
 POST /v1/clarify
 POST /v1/candidates
@@ -26,6 +27,16 @@ POST /v1/feedback
     Required: ``raw``, ``preferred``.
     Optional: ``nbest``, ``candidates``, ``mode`` — when ``nbest`` is sent, also saves
     an utterance bundle with ``picked=preferred`` and returns ``bundle_id`` + ``bundle_url``.
+
+    Or, when ``rating`` is sent (rating a listener-adaptation instead of an ASR
+    correction): ``original``, ``for_listener``, ``rating`` ("good"/"bad"),
+    optional ``substitutions``, ``listener_tags``, ``note``, ``contact_name``,
+    ``reading_lang``. When ``contact_name`` matches a saved contact, repeated
+    ratings tied to the same jargon domain silently teach that contact's
+    profile it already knows that domain — see
+    ``clarityime.cerome.contact_learning`` and docs/COMPREHENSION_MODEL.md §7quinquies.
+    Response may include ``auto_learned_domains`` when a domain just crossed
+    the threshold.
 """
 
 from __future__ import annotations
@@ -48,6 +59,10 @@ from clarityime.api_auth import (
 )
 from clarityime.keychain import key_backend_label
 from clarityime.cerome.human import CeromeHumanProfile, cerome_from_contact, merge_cerome_into_contact
+from clarityime.cerome.tag_registry import FAMILIES as TAG_FAMILIES
+from clarityime.cerome.tag_registry import catalog as tag_catalog
+from clarityime.cerome.tag_registry import quick_setup as tag_quick_setup
+from clarityime.cerome.tag_registry import search as tag_search
 from clarityime.models import AsrCandidate, AsrResult, AudienceMode, ClarifyRequest, ContactProfile, parse_audience_mode
 from clarityime.settings import load_settings, save_settings
 from clarityime.storage.contacts import ContactStore
@@ -135,6 +150,41 @@ class ClarityHandler(BaseHTTPRequestHandler):
         if path == "/v1/settings":
             _json_response(self, 200, load_settings())
             return
+        if path == "/v1/tags":
+            # ?lang=zh|en&family=mbti&q=王者&all=1
+            # No q  → the short common list (what the picker shows by default).
+            # With q → search over ids, labels and 别名, so「王者」「idv」都能命中。
+            qs = parse_qs(urlparse(self.path).query)
+            lang = (qs.get("lang") or ["zh"])[0]
+            family = (qs.get("family") or [None])[0]
+            query = (qs.get("q") or [""])[0]
+            show_all = (qs.get("all") or [""])[0] in ("1", "true", "yes")
+            if query:
+                rows = tag_search(query, lang)
+                if family:
+                    rows = [r for r in rows if r["family"] == family]
+            else:
+                rows = tag_catalog(lang, family)
+                if not show_all:
+                    rows = [r for r in rows if r.get("common")]
+            _json_response(
+                self,
+                200,
+                {
+                    "lang": lang,
+                    "query": query,
+                    "families": list(TAG_FAMILIES),
+                    "tags": rows,
+                },
+            )
+            return
+        if path == "/v1/tags/setup":
+            # The whole settings flow in one payload: 4 questions, common options.
+            qs = parse_qs(urlparse(self.path).query)
+            lang = (qs.get("lang") or ["zh"])[0]
+            show_all = (qs.get("all") or [""])[0] in ("1", "true", "yes")
+            _json_response(self, 200, {"lang": lang, "steps": tag_quick_setup(lang, show_all)})
+            return
         if path == "/v1/consent":
             _json_response(self, 200, load_consent())
             return
@@ -150,6 +200,23 @@ class ClarityHandler(BaseHTTPRequestHandler):
                 _json_response(self, 404, {"error": str(exc)})
                 return
             _json_response(self, 200, bundle)
+            return
+        if path == "/v1/contacts/suggestions":
+            # "建议创建一个新对象吗？" — domains that crossed the auto-learn
+            # threshold while no contact was picked (DEFAULT mode). UI polls
+            # this to decide whether to show the prompt; POST /v1/feedback
+            # with {"resolve_suggestion": {...}} answers it.
+            domains = SpeakerStore().pending_object_suggestions()
+            _json_response(
+                self,
+                200,
+                {
+                    "domains": domains,
+                    "prompt_zh": "看起来你在跟同一个人反复聊——要为他建一个新对象吗？"
+                    if domains
+                    else "",
+                },
+            )
             return
         if path == "/v1/contacts":
             store = ContactStore()
@@ -338,6 +405,9 @@ class ClarityHandler(BaseHTTPRequestHandler):
                 "mode": result.mode.value,
                 "used_network": result.used_network,
                 "notes": result.notes,
+                "substitutions": result.substitutions,
+                "cost": result.cost,
+                "listener_tags": result.listener_tags,
             },
         )
 
@@ -370,6 +440,45 @@ class ClarityHandler(BaseHTTPRequestHandler):
         )
 
     def _handle_feedback(self, body: dict) -> None:
+        if "resolve_suggestion" in body:
+            # Answer to a "建议创建一个新对象吗？" prompt (see /v1/contacts/suggestions).
+            payload = body.get("resolve_suggestion") or {}
+            try:
+                result = SpeakerStore().resolve_object_suggestion(
+                    str(payload.get("domain", "")),
+                    accept=bool(payload.get("accept")),
+                    name=str(payload.get("name", "")),
+                )
+            except ValueError as exc:
+                _json_response(self, 400, {"error": str(exc)})
+                return
+            _json_response(self, 200 if result.get("ok") else 404, result)
+            return
+        if "rating" in body:
+            # Rating on a listener-adaptation: original + for_listener + 好/坏.
+            # Logged only — a human reviews this log to hand-edit JARGON_TABLE
+            # or the ListenerPlan rules. No AI ever reads this log.
+            learn = SpeakerStore().log_adapt_rating(
+                original=str(body.get("original", "")),
+                for_listener=str(body.get("for_listener", "")),
+                rating=str(body.get("rating", "")),
+                substitutions=body.get("substitutions"),
+                listener_tags=body.get("listener_tags"),
+                note=str(body.get("note", "")),
+                contact_name=body.get("contact_name") or None,
+                reading_lang=str(body.get("reading_lang", "zh")),
+            )
+            resp: dict[str, Any] = {"ok": True, "logged": True}
+            if learn.get("auto_learned_domains"):
+                resp["auto_learned_domains"] = learn["auto_learned_domains"]
+            if learn.get("suggested_new_contact_domains"):
+                # UI should now ask "建议创建一个新对象，是否要这样做？"
+                resp["suggest_new_contact"] = {
+                    "domains": learn["suggested_new_contact_domains"],
+                    "prompt_zh": "看起来你在跟同一个人反复聊——要为他建一个新对象吗？",
+                }
+            _json_response(self, 200, resp)
+            return
         raw = body.get("raw", "")
         preferred = body.get("preferred", "")
         if not raw or not preferred:

@@ -1,6 +1,6 @@
 """Local clarification rules — help *understanding*, never summarize.
 
-Design contract (2026-08-11):
+Design contract:
   - Preserve propositions, hedging, attitude, and detail (还行 / 可能 / 感觉 …).
   - Remove only oral *noise* (嗯、那个啥、like), not meaning-bearing words (其实、比较).
   - Structured mode = readable layout (paragraph / sentence breaks), not bullet summaries.
@@ -90,15 +90,6 @@ def _dedupe_spaces(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-_CJK_PUNCT = "，。！？；：、"
-
-
-def _tidy_cjk_spacing(text: str) -> str:
-    """Oral spacing + inserted clause commas can leave 「吧 ，因为」 — close the gap."""
-    out = re.sub(rf"\s+(?=[{_CJK_PUNCT}])", "", text)
-    return re.sub(rf"(?<=[{_CJK_PUNCT}])\s+", "", out)
-
-
 def _is_mostly_english(text: str) -> bool:
     letters = [c for c in text if c.isalpha()]
     if not letters:
@@ -108,7 +99,8 @@ def _is_mostly_english(text: str) -> bool:
 
 
 _LEADING_NOISE = re.compile(
-    r"^(?:嗯+|啊+|呃+|那个|就是|然后|对对对|你知道|怎么说呢)[，,、\s]*"
+    r"^(?:嗯+|啊+|呃+|那个啥|那个|就是|然后|对对对|你知道吗|你知道|怎么说呢"
+    r"|我跟你说啊|我跟你说|啥)[，,、\s]*"
 )
 
 
@@ -179,9 +171,28 @@ def _insert_clause_breaks(text: str, notes: list[str]) -> str:
         out = re.sub(rf"(?<=[^，,；;]){word}", f"，{word}", out)
     out = re.sub(r"(?<=[^，,；;])然后(?=[^，,])", "，然后", out)
     out = re.sub(r"(?<=[^，,；;])就是(?=[^，,])", "，就是", out)
+    # 「不是A是B」— mark the correction, it is the whole point of the sentence
+    out = re.sub(r"(不是[^，,]{2,12}?)是(?=[^，,])", r"\1，是", out)
     if "，因为" in out or "，但是" in out or "，而且" in out:
         notes.append("clause_breaks")
     out = re.sub(r"，然后", "，", out)
+    return out
+
+
+_SUBJECT_BREAK = re.compile(
+    r"(?<=[了对完行吧啊过来去到上下]) *(?=(?:我们|我|你们|你|他们|他|她|它们|它|大家|咱们)"
+    r"(?![的和跟给让帮们]))"
+)
+
+
+def _break_before_subject(text: str, notes: list[str]) -> str:
+    """ASR run-ons have no commas — restore clause edges before a new subject."""
+    if "，" in text and len(text) < 30:
+        return text
+    out = _SUBJECT_BREAK.sub("，", text)
+    out = re.sub(r"，{2,}", "，", out)
+    if out != text:
+        notes.append("clause_breaks:subject")
     return out
 
 
@@ -276,9 +287,9 @@ def _clarify_core(
     if drop_greeting:
         out = _strip_social_greeting(out, notes)
     out = _insert_clause_breaks(out, notes)
+    out = _break_before_subject(out, notes)
     out = _trim_redundant_pronouns(out, notes)
     out = _split_runon(out)
-    out = _tidy_cjk_spacing(out)
     out = _punctuate(out)
     notes.append("preserve_detail")
     return out, notes

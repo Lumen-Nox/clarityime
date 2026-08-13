@@ -1,7 +1,7 @@
 """Cerome observer tags for ClarityIME human profiles (audience + speaker).
 
 Cerome L1–L5 here = *communication-facing tags* for clarify routing.
-Tags describe how a listener parses speech, not an agent substrate.
+Observer framework (not agent substrate) — see Ideas/Aura/Cerome是observer框架.
 """
 
 from clarityime.cerome.human import (

@@ -109,6 +109,11 @@ class ClarifyResult:
     for_listener: str = ""
     notes: list[str] = field(default_factory=list)
     all_candidates_considered: list[str] = field(default_factory=list)
+    # Audit trail: every word swap, and the measured comprehension cost delta
+    substitutions: list[dict] = field(default_factory=list)
+    cost: dict = field(default_factory=dict)
+    #: Resolved listener tags that drove this adaptation (audit + UI display)
+    listener_tags: list[str] = field(default_factory=list)
 
     @property
     def polished(self) -> str:

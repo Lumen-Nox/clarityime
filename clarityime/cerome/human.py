@@ -7,7 +7,7 @@ Mapping (communication observer lens):
   L4 — context: formality setting, stress, novelty
   L5 — mood label for UX / clarify routing
 
-Empathic accuracy in unconstrained settings is often ~20–35% (Ickes, 1997).
+Refs: PAT Cerome framework; mini_cerome L1/L2/L4; empathic accuracy ~20–35% (Ickes).
 """
 
 from __future__ import annotations
@@ -91,6 +91,15 @@ class CeromeHumanProfile:
     l3: CeromeL3Relational = field(default_factory=CeromeL3Relational)
     l4: CeromeL4Context = field(default_factory=CeromeL4Context)
     l5: CeromeL5Mood = field(default_factory=CeromeL5Mood)
+    #: Declared listener tags (see cerome/tags.py). Domain tags live ONLY here —
+    #: they are never inferred from personality or from L1/L2 numbers.
+    tags: list[str] = field(default_factory=list)
+    #: Domains learned from *behavioural evidence* (repeated "bad" ratings when
+    #: we simplified a term this listener actually knew) — see
+    #: clarityime.cerome.contact_learning. Never a guess from personality;
+    #: every entry here has a logged, human-inspectable evidence trail and can
+    #: be removed the same way a mis-tagged face gets renamed in a photo app.
+    auto_domains: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -99,6 +108,8 @@ class CeromeHumanProfile:
             "L3": self.l3.to_dict(),
             "L4": self.l4.to_dict(),
             "L5": self.l5.to_dict(),
+            "tags": sorted(self.tags),
+            "auto_domains": sorted(self.auto_domains),
         }
 
     @classmethod
@@ -136,6 +147,8 @@ class CeromeHumanProfile:
                 novelty=float(l4d.get("novelty", 0.5)),
             ),
             l5=CeromeL5Mood(label=str(l5d.get("label", "steady"))),
+            tags=[str(t) for t in (data.get("tags") or [])],
+            auto_domains=[str(t) for t in (data.get("auto_domains") or [])],
         )
 
     def to_clarify_hints(self, *, name: str, relationship: str, age_hint: str = "") -> dict[str, str]:
@@ -184,6 +197,7 @@ class CeromeHumanProfile:
             "L2": self.l2.to_dict(),
             "L4": self.l4.to_dict(),
             "L5": self.l5.to_dict(),
+            "tags": sorted(self.tags),
         }
 
 
@@ -238,6 +252,19 @@ def cerome_from_contact(profile: ContactProfile) -> CeromeHumanProfile:
     base.l3.comprehension_gaps = (
         profile.comprehension_notes or base.l3.comprehension_gaps
     )
+    # Tags are read verbatim from what the user declared. Nothing here looks at
+    # style_notes or relationship to guess a domain — that would be inference.
+    declared = profile.extra.get("tags")
+    if declared:
+        base.tags = (
+            [t.strip() for t in declared.replace(";", ",").split(",") if t.strip()]
+            if isinstance(declared, str)
+            else [str(t).strip() for t in declared if str(t).strip()]
+        )
+    # Behavioural evidence (contact_learning.py), never personality-guessed.
+    learned = profile.extra.get("auto_learned_domains")
+    if learned:
+        base.auto_domains = [str(d).strip() for d in learned if str(d).strip()]
     return base
 
 

@@ -7,7 +7,7 @@ static class AppPaths
         get
         {
             var dir = AppContext.BaseDirectory.TrimEnd('\\', '/');
-            // dist/ or ClarityIMEHost/bin/ → climb to repo root (contains clarityime/main.py)
+            // dist/ or ClarityIMEHost/bin/ → climb to code-ClarityIME
             for (var i = 0; i < 6; i++)
             {
                 var candidate = Path.Combine(dir, "clarityime", "main.py");
@@ -15,7 +15,7 @@ static class AppPaths
                     return dir;
                 dir = Path.GetDirectoryName(dir) ?? dir;
             }
-            // installed: use env or walk up from install dir
+            // installed: use env or default sibling of Programs
             var env = Environment.GetEnvironmentVariable("CLARITYIME_ROOT");
             if (!string.IsNullOrEmpty(env) && Directory.Exists(env)) return env;
             return Path.Combine(

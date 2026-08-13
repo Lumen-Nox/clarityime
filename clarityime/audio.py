@@ -45,7 +45,6 @@ def record_until_silence(
 
 
 def save_wav(audio: Any, path: Path, sample_rate: int = 16000) -> None:
-    require_asr("Saving WAV recordings")
     import numpy as np
 
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -60,6 +59,7 @@ def save_wav(audio: Any, path: Path, sample_rate: int = 16000) -> None:
 
 def record_fixed(seconds: float = 5.0, sample_rate: int = 16000) -> Any:
     require_asr("Microphone capture")
+    import numpy as np
     import sounddevice as sd
 
     frames = int(seconds * sample_rate)

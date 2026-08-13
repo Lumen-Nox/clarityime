@@ -152,15 +152,12 @@ class ContactExportHttpTests(unittest.TestCase):
         )
 
         self._httpd = ThreadingHTTPServer(("127.0.0.1", 0), ClarityHandler)
-        self._httpd.daemon_threads = False
-        self._httpd.block_on_close = True
         self._port = self._httpd.server_address[1]
         self._thread = threading.Thread(target=self._httpd.serve_forever, daemon=True)
         self._thread.start()
 
     def tearDown(self) -> None:
         self._httpd.shutdown()
-        self._thread.join(timeout=10)
         self._httpd.server_close()
         self._contacts_mod.DEFAULT_DB = self._orig_default
         self._tmpdir.cleanup()

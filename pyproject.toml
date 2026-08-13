@@ -1,7 +1,7 @@
 [project]
 name = "clarityime"
-version = "0.4.0"
-description = "Integrated voice-clarity input method (IME) — speech clarify inside IME via built-in ASR + audience-targeted clarification"
+version = "0.5.0"
+description = "IME-native audience comprehension — local clarify rules, tag registry, contact learning, and optional share links (payload in URL fragment; server never sees message text)"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "Apache-2.0" }

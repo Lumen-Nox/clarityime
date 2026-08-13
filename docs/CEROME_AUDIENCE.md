@@ -1,6 +1,7 @@
 # Cerome audience tags in ClarityIME
 
-Cerome here means **observer tags for clarify routing**—how the listener parses speech—not an agent personality substrate.
+> Cerome here = **observer tags** for clarify routing, not agent substrate.  
+> See `Ideas/Aura/Cerome是observer框架_PAT是base_2026-06-02.md`.
 
 ## Layer mapping (human → communication)
 

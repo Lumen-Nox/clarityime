@@ -71,8 +71,6 @@ class LocalApiAuthTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         bind_test_data_dir(Path(tmp.name) / "data")
         httpd = ThreadingHTTPServer(("127.0.0.1", 0), ClarityHandler)
-        httpd.daemon_threads = False
-        httpd.block_on_close = True
         port = httpd.server_address[1]
         thread = threading.Thread(target=httpd.serve_forever, daemon=True)
         thread.start()
@@ -89,7 +87,6 @@ class LocalApiAuthTests(unittest.TestCase):
             conn.close()
         finally:
             httpd.shutdown()
-            thread.join(timeout=10)
             httpd.server_close()
             tmp.cleanup()
 

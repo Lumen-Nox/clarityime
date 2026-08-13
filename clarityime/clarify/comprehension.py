@@ -24,6 +24,8 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
+from clarityime.clarify.paraphrase import count_jargon  # noqa: F401  (re-export)
+
 PUNCT = "，,；;。！？!?、：: \t\n\u3000"
 
 REASON_PREFIXES = ("因为", "由于")
@@ -120,8 +122,10 @@ def render_lines(lines: list[list[str]]) -> str:
         if not group:
             continue
         body = "，".join(group)
-        # Terminal punctuation follows the *final* clause, not any earlier one
-        out.append(body + _terminal(group[-1]))
+        # Illocutionary force belongs to the whole utterance, not the last clause.
+        # 「能不能晚一天交，因为我这周有点忙」is a request; ending it in 。 would
+        # silently turn a question into a statement (Searle 1969, speech acts).
+        out.append(body + _terminal(group[-1], force_question=any(map(_is_question, group))))
     return "\n".join(out)
 
 
@@ -247,6 +251,90 @@ def claim_first(clauses: list[str], notes: list[str]) -> list[str]:
 # --------------------------------------------------------------------------- #
 
 
+VALUE_CUES: dict[str, tuple[str, ...]] = {
+    "precision": ("数据", "成本", "格式", "错误", "风险", "问题", "接口", "指标"),
+    "warmth": ("觉得", "感觉", "希望", "担心", "士气", "累", "难", "开心", "抱歉"),
+    "efficiency": ("时间", "截止", "来不及", "赶", "快", "慢", "周期", "排期", "天"),
+}
+
+
+SEQUENCE_PREFIXES = ("首先", "其次", "然后", "接着", "之后", "最后", "先", "再")
+
+#: clauses naming something you can point at — a number, a date, a case
+_CONCRETE = re.compile(r"\d|上次|昨天|今天|明天|上周|例如|比如|这次|那次")
+
+
+def _affinity(clause: str, weights: dict[str, float], *, concrete_first: bool = False) -> float:
+    score = 0.0
+    for dim, cues in VALUE_CUES.items():
+        hits = sum(1 for c in cues if c in clause)
+        if re.search(r"\d", clause) and dim == "precision":
+            hits += 1
+        score += hits * weights.get(dim, 0.5)
+    if concrete_first and _CONCRETE.search(clause):
+        # Se-dominant / low-openness listeners anchor on the concrete instance
+        # before they will process the abstraction (Paivio 1971, dual coding).
+        score += 2.0
+    return score
+
+
+def order_supports(
+    clauses: list[str],
+    weights: dict[str, float],
+    notes: list[str],
+    *,
+    concrete_first: bool = False,
+) -> list[str]:
+    """A8 — among *supporting* clauses only, lead with what this listener weighs.
+
+    The claim, contrasts and consequences keep their slots, so the argument
+    skeleton is untouched; only interchangeable reasons/additions are resorted.
+    """
+    out = list(clauses)
+    changed = False
+    # Only swap clauses of the *same* discourse role, so 因为/而且 never trade places
+    for role in ("reason", "addition"):
+        slots = [i for i, c in enumerate(clauses) if _clause_role(c) == role]
+        if len(slots) < 2:
+            continue
+        ranked = sorted(
+            slots, key=lambda i: -_affinity(clauses[i], weights, concrete_first=concrete_first)
+        )
+        if ranked == slots:
+            continue
+        for slot, src in zip(slots, ranked):
+            out[slot] = clauses[src]
+        changed = True
+    if not changed:
+        return clauses
+    notes.append("A8:concrete_first" if concrete_first else "A8:value_order")
+    return out
+
+
+def signal_sequence(lines: list[list[str]], notes: list[str]) -> list[list[str]]:
+    """A9 — one step per line for listeners who read procedurally (Si, 尽责性高).
+
+    Layout only: 先/然后/最后 already exist in the text, we just stop hiding the
+    step boundary inside a run-on line (Lorch 1989, signalling in text).
+    """
+    out: list[list[str]] = []
+    changed = False
+    for group in lines:
+        current: list[str] = []
+        for clause in group:
+            if current and clause.startswith(SEQUENCE_PREFIXES):
+                out.append(current)
+                current = [clause]
+                changed = True
+            else:
+                current.append(clause)
+        if current:
+            out.append(current)
+    if changed:
+        notes.append("A9:sequence")
+    return out
+
+
 def dedupe_repeats(clauses: list[str], notes: list[str]) -> list[str]:
     seen: set[str] = set()
     out: list[str] = []
@@ -324,6 +412,7 @@ class InvariantReport:
     lost_content: list[str] = field(default_factory=list)
     lost_hedges: list[str] = field(default_factory=list)
     polarity_delta: int = 0
+    force_kept: bool = True
 
     def as_notes(self) -> list[str]:
         if self.ok:
@@ -337,6 +426,8 @@ class InvariantReport:
             problems.append("lost_hedges")
         if self.polarity_delta:
             problems.append("polarity")
+        if not self.force_kept:
+            problems.append("speech_act")
         return [f"invariants:violated({','.join(problems)})"]
 
 
@@ -350,13 +441,23 @@ def check_invariants(original: str, adapted: str) -> InvariantReport:
     pol_src = sum(src[n] for n in NEGATIONS)
     pol_dst = sum(dst[n] for n in NEGATIONS)
 
-    ok = not new_content and not lost and not lost_hedges and pol_dst >= pol_src
+    # Speech act must survive: a question may not come back as a statement.
+    force_kept = not (_is_question(original) and "？" not in adapted)
+
+    ok = (
+        not new_content
+        and not lost
+        and not lost_hedges
+        and pol_dst >= pol_src
+        and force_kept
+    )
     return InvariantReport(
         ok=ok,
         new_content=new_content,
         lost_content=lost,
         lost_hedges=lost_hedges,
         polarity_delta=pol_dst - pol_src,
+        force_kept=force_kept,
     )
 
 

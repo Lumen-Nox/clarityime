@@ -1,24 +1,32 @@
 ﻿# ClarityIME
 
-**Speech input that clarifies meaning for your audience—not just polish—and commits text into the focused field.**
+**An IME that clarifies meaning for the person who will read it — not a tone polisher.**
 
-ClarityIME is an integrated input method (IME): speak → clarify for who will read it → pick a candidate → insert at the caret. The Python core runs locally on `127.0.0.1:17800` with offline rule-based clarification and optional local Whisper ASR. Platform shells for **Windows** and **Android** are included in this repository.
+Speak or type, then ClarityIME rearranges the same propositions so the *listener* spends less effort: referents land, claims come first, jargon is tabled by a declared domain. It then commits text into the focused field. Nothing is summarized. Stance, hedges, and questions stay as they were.
+
+This is the public repository for GOAI 2026 Boundless Agents (AI + Education). Apache-2.0. Author: **Lumen**.
+
+https://github.com/Lumen-Nox/clarityime
 
 ## How it works
 
 ```
-Microphone / platform ASR
+Microphone / typed text / platform ASR
         ↓
-Local clarify engine (audience-aware, meaning preserved)
+Local rules (fillers, CJK spacing) — still the speaker's words
+        ↓
+Comprehension ops keyed on listener tags
+  (referents, claim-first, working-memory chunks, jargon table)
+        ↓
+Optional share link  https://clarityime.app/c#<fragment>
+  (payload lives in the URL fragment; a server never sees the message)
         ↓
 Candidate picker → commitText / paste at caret
 ```
 
-Clarification **reduces misunderstanding** (filler removal, referent grounding, chunking). It is **not** style polish or tone rewriting.
+Clarification **reduces misunderstanding**. It is **not** style polish.
 
-## Audience adaptation
-
-The same propositions are re-laid-out to lower the *reader's* processing cost. Nothing is summarized, no stance is rewritten, and an invariant check rejects any adaptation that drops content. Run `clarityime demo` to reproduce:
+## Audience adaptation (run `clarityime demo`)
 
 Raw: `嗯那个 就是我想说一下这个方案吧 因为上次联调的时候大文件上传老是超时 所以我觉得可能得先改重试那块 但是我不太确定会不会影响别的接口 你觉得呢`
 
@@ -27,37 +35,40 @@ Raw: `嗯那个 就是我想说一下这个方案吧 因为上次联调的时候
 | `analytical` | one claim per line, causal edges explicit | 6.5 → **0.0** |
 | `warm_flow` | single continuous voice, hedging kept audible | 6.5 → **4.5** |
 
-The listener profile selects which operations apply — referent resolution, subject restoration, claim-first ordering, chunking to a working-memory budget, relation signaling. Budgets follow Cowan (2001) and Sweller (1988); see [docs/COMPREHENSION_MODEL.md](docs/COMPREHENSION_MODEL.md).
+Budgets follow Cowan (2001) and Sweller (1988). Invariants (no new content, no lost content, hedges kept, speech-act kept) reject any adaptation that would rewrite the speaker. See [docs/COMPREHENSION_MODEL.md](docs/COMPREHENSION_MODEL.md).
 
-Built-in profiles: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved contact carries its own profile instead.
+Public preset names: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved contact carries its own tag set instead.
+
+## What is in this version (0.5.0)
+
+| Piece | What a judge can check |
+|---|---|
+| Tag registry | Human-readable tags. A personality tag **never** implies domain knowledge (INTJ ≠ knows tech jargon). |
+| Jargon table | Fixed local substitutions in `clarify/paraphrase.py`, audited, 1:1 synonym. Circle-insiders keep the term. |
+| Contact learning | Count ratings per contact. Threshold **3**, no LLM. Same evidence → same outcome. |
+| Share link | `encode` / `decode` round-trip in tests. The viewer page at `clarityime.app` is **not deployed yet**; the fragment protocol is real. |
+| Determinism | `tests/test_determinism.py` AST-scans `clarify/` for `random` / HTTP / LLM imports. |
 
 ## Quick start
 
-Default install gives **clarify**, **demo**, and **serve** with no ASR or global hotkeys — only `rich` is required, and works on Linux, macOS, and Windows.
+Default install is **clarify / demo / serve** with no ASR and no global hotkeys. The only runtime dependency is `rich`.
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\pip install -e .
 
-# Optional extras (install only what you need):
-# pip install -e ".[asr]"      # local Whisper + microphone capture
-# pip install -e ".[desktop]"  # global hotkey + clipboard paste (clarityime run)
-# pip install -e ".[all]"    # everything above
+# Optional:
+# pip install -e ".[asr]"      # local Whisper + microphone
+# pip install -e ".[desktop]"  # global hotkey + clipboard paste
+# pip install -e ".[all]"
 
-# Start the local API (loopback only)
 clarityime serve
-
-# Clarify sample text offline
 clarityime clarify "嗯那个 我明天可能 大概 要请假"
-
-# Interactive demo (no microphone)
 clarityime demo
-
-# Run tests
-.\.venv\Scripts\python.exe -m unittest discover tests -v
+python -m unittest discover tests -v
 ```
 
-On Linux/macOS, use `python3 -m venv .venv` and `source .venv/bin/activate` instead. For full dev dependencies (ASR + desktop), use `pip install -r requirements.txt` or `pip install -e ".[all]"`.
+On Linux/macOS: `python3 -m venv .venv` and `source .venv/bin/activate`.
 
 Set `CLARITYIME_DATA_DIR` to override where contacts, settings, and consent are stored (default: `~/.clarityime/data` in development).
 
@@ -83,37 +94,28 @@ Set `CLARITYIME_DATA_DIR` to override where contacts, settings, and consent are 
 | POST | `/v1/bundles` | Save utterance snapshot |
 | GET | `/v1/bundles/{id}` | Load utterance snapshot |
 
-Mutating endpoints require header `X-ClarityIME-Token` (written to your data directory on first `serve`).
+Mutating endpoints require header `X-ClarityIME-Token` (written to the data directory on first `serve`). Loopback only (`127.0.0.1`).
 
-## Privacy and local-first
+## Privacy
 
-- Core binds to **loopback only** (`127.0.0.1`).
-- Clarification runs **offline** by default (rule engine in `clarityime/clarify/`).
-- Contacts and sensitive fields are stored locally; optional field encryption uses OS key wrapping on Windows.
-- `cloud_sync` and `aggregate_research` consent flags default to **off**.
+- Core binds to **loopback only**.
+- Clarification runs **offline** (rule engine in `clarityime/clarify/`).
+- Share-link payloads sit in the URL **fragment**; they are not POSTed to a server.
+- `cloud_sync` and `aggregate_research` default to **off**.
 
-See [SECURITY.md](SECURITY.md) for the threat model and [ARCHITECTURE.md](ARCHITECTURE.md) for component layout.
+See [SECURITY.md](SECURITY.md) and [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Platform status (this repo)
+## Platform status
 
 | Platform | Path | Status |
 |----------|------|--------|
-| **Windows tray host** | `platforms/windows/ClarityIMEHost/` | Hotkey + settings + paste flow |
-| **Windows TSF IME** | `platforms/windows/ClarityIMETSF/` | System keyboard (`install-tsf.ps1`) |
+| **Windows tray host** | `platforms/windows/ClarityIMEHost/` | Hotkey + settings + paste |
+| **Windows TSF IME** | `platforms/windows/ClarityIMETSF/` | System keyboard |
 | **Android IME** | `platforms/android/ClarityIME/` | InputMethodService + SpeechRecognizer |
-| macOS / Linux / iOS | — | Not included in this open-source slice |
+| Linux (IBus / fcitx5), macOS, iOS | `platforms/linux` · `macos` · `ios` | Source in-tree; not the supported demo path |
 
-Windows install: `platforms/windows/install.ps1` · Android build: see `platforms/android/README.md`.
-
-Dev smoke scripts: `scripts/smoke_core.ps1`, `scripts/e2e_pipeline.ps1`, `scripts/build_core.ps1`.
-
-## Documentation
-
-- [ARCHITECTURE.md](ARCHITECTURE.md) — components and deployment
-- [SECURITY.md](SECURITY.md) — threat model and encryption
-- [docs/COMPREHENSION_MODEL.md](docs/COMPREHENSION_MODEL.md) — psycholinguistic clarify constraints
-- [docs/CEROME_AUDIENCE.md](docs/CEROME_AUDIENCE.md) — audience tagging layers
+Windows install: `platforms/windows/install.ps1` · Android: `platforms/android/README.md`.
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Apache License 2.0 — [LICENSE](LICENSE) and [NOTICE](NOTICE).
