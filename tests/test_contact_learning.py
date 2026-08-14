@@ -110,7 +110,20 @@ class RecordFeedbackTests(unittest.TestCase):
                 extra = record_feedback(extra, rating=rating, substitutions=[_jargon_sub("ddl")]).extra
             return extra
 
-        self.assertEqual(run(), run())
+        def without_clock(extra: dict) -> dict:
+            counts = {}
+            for domain, slot in (extra.get("domain_feedback_counts") or {}).items():
+                counts[domain] = {
+                    "good": slot.get("good"),
+                    "bad": slot.get("bad"),
+                    "n_evidence": len(slot.get("evidence") or []),
+                }
+            return {
+                "auto_learned_domains": extra.get("auto_learned_domains"),
+                "counts": counts,
+            }
+
+        self.assertEqual(without_clock(run()), without_clock(run()))
 
 
 class PlanIntegrationTests(unittest.TestCase):
