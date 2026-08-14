@@ -161,6 +161,9 @@ JARGON_TABLE: dict[str, tuple[str, str]] = {
     # -- school --------------------------------------------------------------
     "绩点": ("课程平均分", "school"),
     "GPA": ("课程平均分", "school"),
+    # -- internet / 网络口语（默认翻译；关心梗才保留）----------------
+    "破防": ("情绪被戳到", "internet"),
+    "破大防": ("情绪被狠狠戳到", "internet"),
 }
 
 #: English jargon → (plain English, domain). Same rule as the Chinese table:

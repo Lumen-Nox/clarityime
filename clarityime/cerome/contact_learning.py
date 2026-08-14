@@ -89,7 +89,7 @@ def record_feedback(
     newly_forgotten: list[str] = []
 
     domains_in_message = {
-        d for s in (substitutions or []) if s.get("kind") == "jargon"
+        d for s in (substitutions or []) if s.get("kind") in ("jargon", "analogy")
         for d in [domain_of(s.get("from", ""), lang)]
         if d
     }

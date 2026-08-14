@@ -308,7 +308,7 @@ _HOBBY = [
     ("hobby_fitness", "健身", "fitness", ("sports",), True, ("撸铁", "gym")),
     ("hobby_ball_sports", "球类运动", "team sports", ("sports",), False, ("篮球", "足球")),
     ("hobby_boardgame", "桌游/剧本杀", "board games & RPG", ("gaming",), False, ("剧本杀", "跑团", "dnd")),
-    ("hobby_cooking", "做饭", "cooking", (), False, ("烹饪", "下厨")),
+    ("hobby_cooking", "做饭", "cooking", ("food",), False, ("烹饪", "下厨")),
     ("hobby_travel", "旅行", "travel", (), False, ("旅游",)),
     ("hobby_finance", "研究投资", "investing", ("finance",), False, ("炒股", "理财")),
     ("hobby_debate", "辩论", "debate", ("academic",), False, ("debate",)),
@@ -493,6 +493,8 @@ _DOMAIN = [
     ("webnovel", "网文", "web-novel slang"),
     ("film_tv", "影视剧", "film & TV slang"),
     ("idol", "饭圈应援", "idol-fandom slang"),
+    ("internet", "网络梗/互联网口语", "internet slang"),
+    ("food", "饮食", "food slang"),
 ]
 for _id, _z, _e in _DOMAIN:
     _t(_id, "domain", _z, _e, "他已经拥有这套词汇", "already owns this vocabulary",
@@ -731,6 +733,8 @@ _TOPIC = [
      ("漫圈", "番剧新闻")),
     ("topic_film", "关心影视新闻", "follows film news", False, ("film_tv",),
      ("影视圈", "电影新闻")),
+    ("topic_memes", "关心梗 / 互联网文化", "follows memes", False, ("internet",),
+     ("梗", "网络梗", "meme", "互联网文化")),
 ]
 for _id, _z, _e, _c, _gr, _al in _TOPIC:
     _t(_id, "topic", _z, _e, "他在跟这个话题，相关说法算他懂",

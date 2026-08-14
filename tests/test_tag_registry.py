@@ -106,6 +106,8 @@ class NoCrossFamilyInferenceTests(unittest.TestCase):
     def test_hobby_does_grant_vocabulary(self) -> None:
         self.assertIn("tech", parse_tags(["hobby_coding"]).domains())
         self.assertIn("music", parse_tags(["hobby_music_play"]).domains())
+        self.assertIn("food", parse_tags(["hobby_cooking"]).domains())
+        self.assertIn("internet", parse_tags(["topic_memes"]).domains())
 
     def test_presets_carry_personality_only(self) -> None:
         for key, profile in PRESETS.items():
@@ -126,6 +128,15 @@ class BehaviourTests(unittest.TestCase):
         )
         self.assertIn("组队", plain.text)  # 开黑 translated
         self.assertIn("开黑", gamer.text)  # gamer keeps it
+
+    def test_internet_slang_translates_unless_the_listener_follows_memes(self) -> None:
+        original, _ = preserve_original("听到这个我破防了")
+        outsider = adapt_with_report(original, replace(PRESETS["s_type"], tags=["mbti_infp"]))
+        insider = adapt_with_report(
+            original, replace(PRESETS["s_type"], tags=["mbti_infp", "topic_memes"])
+        )
+        self.assertIn("情绪被戳到", outsider.text)
+        self.assertIn("破防", insider.text)
 
     def test_define_terms_overrides_ownership(self) -> None:
         """不熟的人：全部解释，哪怕他懂。"""

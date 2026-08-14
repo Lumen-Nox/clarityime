@@ -71,6 +71,13 @@ class RecordFeedbackTests(unittest.TestCase):
         self.assertNotIn("tech", extra["auto_learned_domains"])
         self.assertEqual(update.newly_forgotten, ["tech"])
 
+    def test_analogy_substitution_counts_toward_the_source_domain(self) -> None:
+        extra: dict = {}
+        analog = {"from": "守椅", "to": "守椅（就像架点）", "kind": "analogy"}
+        for _ in range(AUTO_LEARN_THRESHOLD):
+            extra = record_feedback(extra, rating="bad", substitutions=[analog]).extra
+        self.assertIn("asym_horror", extra.get("auto_learned_domains", []))
+
     def test_non_jargon_substitutions_carry_no_domain(self) -> None:
         extra: dict = {}
         for _ in range(10):

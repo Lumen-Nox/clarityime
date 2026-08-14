@@ -1,6 +1,6 @@
 [project]
 name = "clarityime"
-version = "0.6.2"
+version = "0.6.3"
 description = "IME-native audience comprehension — local clarify rules, cross-circle analogies, tag registry, contact learning, and optional share links (payload in URL fragment; server never sees message text)"
 readme = "README.md"
 requires-python = ">=3.9"
