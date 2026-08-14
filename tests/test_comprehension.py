@@ -57,7 +57,7 @@ class InvariantTests(unittest.TestCase):
 
     def test_every_substitution_comes_from_the_audited_table(self) -> None:
         """No generation: each swap must be traceable to a reviewable rule."""
-        allowed_kinds = {"jargon", "nominal", "redundancy", "lexicon"}
+        allowed_kinds = {"jargon", "analogy", "nominal", "redundancy", "lexicon"}
         for raw in SAMPLES:
             original, _ = preserve_original(raw)
             for key, profile in PRESETS.items():
@@ -66,6 +66,11 @@ class InvariantTests(unittest.TestCase):
                     self.assertIn(sub.kind, allowed_kinds, f"{key}: {sub}")
                     if sub.kind == "jargon":
                         self.assertEqual(JARGON_TERMS.get(sub.src), sub.dst)
+                    if sub.kind == "analogy":
+                        self.assertTrue(
+                            sub.dst.startswith(sub.src),
+                            f"analogy must keep the speaker's word: {sub}",
+                        )
                     self.assertIn(sub.src, res.baseline + original)
 
     def test_jargon_kept_only_for_declared_domains(self) -> None:

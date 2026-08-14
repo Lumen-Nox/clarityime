@@ -36,7 +36,14 @@ POST /v1/feedback
     profile it already knows that domain — see
     ``clarityime.cerome.contact_learning`` and docs/COMPREHENSION_MODEL.md §7quinquies.
     Response may include ``auto_learned_domains`` when a domain just crossed
-    the threshold.
+    the threshold on a named contact, or ``suggest_new_contact`` when the same
+    threshold was reached in DEFAULT mode (no object picked) — the UI must
+    ask yes/no before anything is created.
+
+    POST /v1/feedback  ``{"resolve_suggestion": {"domain", "accept", "name"?}}``
+    answers that prompt. ``accept: true`` with empty ``name`` auto-creates
+    ``对象 N``. ``GET /v1/contacts/suggestions`` lists pending prompts and an
+    ``auto_name_preview``.
 """
 
 from __future__ import annotations
@@ -205,16 +212,23 @@ class ClarityHandler(BaseHTTPRequestHandler):
             # "建议创建一个新对象吗？" — domains that crossed the auto-learn
             # threshold while no contact was picked (DEFAULT mode). UI polls
             # this to decide whether to show the prompt; POST /v1/feedback
-            # with {"resolve_suggestion": {...}} answers it.
-            domains = SpeakerStore().pending_object_suggestions()
+            # with {"resolve_suggestion": {...}} answers it. Saying yes with
+            # no name auto-creates 对象 N.
+            store = SpeakerStore()
+            domains = store.pending_object_suggestions()
+            preview = store.preview_auto_object_name() if domains else ""
             _json_response(
                 self,
                 200,
                 {
                     "domains": domains,
-                    "prompt_zh": "看起来你在跟同一个人反复聊——要为他建一个新对象吗？"
-                    if domains
-                    else "",
+                    "prompt_zh": (
+                        f"看起来你在跟同一个人反复聊——要为他建一个新对象吗？"
+                        f"点「是」可以自动命名为{preview}。"
+                        if domains
+                        else ""
+                    ),
+                    "auto_name_preview": preview,
                 },
             )
             return
@@ -442,16 +456,14 @@ class ClarityHandler(BaseHTTPRequestHandler):
     def _handle_feedback(self, body: dict) -> None:
         if "resolve_suggestion" in body:
             # Answer to a "建议创建一个新对象吗？" prompt (see /v1/contacts/suggestions).
+            # accept=true with empty name → auto-creates 对象 N (album-style).
             payload = body.get("resolve_suggestion") or {}
-            try:
-                result = SpeakerStore().resolve_object_suggestion(
-                    str(payload.get("domain", "")),
-                    accept=bool(payload.get("accept")),
-                    name=str(payload.get("name", "")),
-                )
-            except ValueError as exc:
-                _json_response(self, 400, {"error": str(exc)})
-                return
+            result = SpeakerStore().resolve_object_suggestion(
+                str(payload.get("domain", "")),
+                accept=bool(payload.get("accept")),
+                name=str(payload.get("name", "")),
+                lang=str(payload.get("lang") or body.get("reading_lang") or "zh"),
+            )
             _json_response(self, 200 if result.get("ok") else 404, result)
             return
         if "rating" in body:
@@ -472,10 +484,15 @@ class ClarityHandler(BaseHTTPRequestHandler):
             if learn.get("auto_learned_domains"):
                 resp["auto_learned_domains"] = learn["auto_learned_domains"]
             if learn.get("suggested_new_contact_domains"):
-                # UI should now ask "建议创建一个新对象，是否要这样做？"
+                store = SpeakerStore()
+                preview = store.preview_auto_object_name()
                 resp["suggest_new_contact"] = {
                     "domains": learn["suggested_new_contact_domains"],
-                    "prompt_zh": "看起来你在跟同一个人反复聊——要为他建一个新对象吗？",
+                    "prompt_zh": (
+                        "看起来你在跟同一个人反复聊——要为他建一个新对象吗？"
+                        f"点「是」可以自动命名为{preview}。"
+                    ),
+                    "auto_name_preview": preview,
                 }
             _json_response(self, 200, resp)
             return

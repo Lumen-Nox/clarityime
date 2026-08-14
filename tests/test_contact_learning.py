@@ -239,6 +239,7 @@ class DefaultAudienceSuggestionTests(unittest.TestCase):
         self.assertEqual(result["auto_learned_domains"], [])
         self.assertEqual(result["suggested_new_contact_domains"], ["tech"])
         self.assertEqual(store.pending_object_suggestions(), ["tech"])
+        self.assertEqual(store.preview_auto_object_name(), "对象 1")
         self.assertEqual(ContactStore().list_contacts(), [])
 
     def test_yes_without_name_auto_creates_object_one(self) -> None:
