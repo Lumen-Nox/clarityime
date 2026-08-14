@@ -40,7 +40,7 @@ Budgets follow Cowan (2001) and Sweller (1988). Invariants (no new content, no l
 
 Public preset names: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved contact carries its own tag set instead.
 
-## What is in this version (0.6.5)
+## What is in this version (0.6.6)
 
 | Piece | What a judge can check |
 |---|---|

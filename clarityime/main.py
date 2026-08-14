@@ -18,7 +18,8 @@ from clarityime.settings import load_settings, save_settings
 from clarityime.storage.contacts import ContactStore
 from clarityime.storage.speaker import SpeakerStore
 
-console = Console()
+# Windows cp1252 / GH Actions must not crash on CJK demo text.
+console = Console(legacy_windows=False)
 
 MODE_CHOICES = ["default", "contact", "structured", "ai"]
 
