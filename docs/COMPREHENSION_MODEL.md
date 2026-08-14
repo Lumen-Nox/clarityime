@@ -170,6 +170,7 @@ McNamara 等人发现：**背景知识低**的读者从高衔接文本获益显�
 | A7 | **连贯流式**（高共情听者不做分析式切分） | McNamara 1996 逆衔接效应 | ❌ 只改断点位置 |
 | A8 | **支撑句按听者在意的维度排序**（同角色之间） | Petty & Cacioppo 1986 中心路径 | ❌ 只调顺序 |
 | **T1** | **行话 → 人话**（听者不属于该圈子时） | Rayner & Duffy 1986 词频效应；Crossley 2011 | ❌ 固定审计表，1:1 同义 |
+| **T1a** | **跨圈类比**（他圈有对应词时夹「就像 X」） | Gentner 1983 structure-mapping | ❌ 固定审计表；原词保留 |
 | **T2** | **去名词化**：进行一次复盘 → 复盘 | Halliday & Martin 1993 语法隐喻 | ❌ 删空动词 |
 | **T3** | **去冗余**：的话／这样子／…的处理 | 外在负荷 | ❌ 删虚词 |
 
@@ -181,7 +182,7 @@ T1 是**固定本地表**（`clarify/paraphrase.py`，一屏可读完），不�
 
 **听者是圈内人就不替换**（audience design，Clark & Murphy 1982）。
 判据是**这个词的领域**是否在**这个人声明的 domain 标签**里 —— 见 §7.3。
-Personality presets never carry domain tags: INTJ ≠ knows tech jargon.
+性格预设一律不带 domain 标签：INTJ 不等于懂技术。
 
 ### 禁止操作（会改变说话人）
 
@@ -237,45 +238,54 @@ Personality presets never carry domain tags: INTJ ≠ knows tech jargon.
 
 ## 7. 标签系统：规则只认标签，不认人、不认描述
 
-> Design rule: rules key on **tags**, not free-text descriptions or guesses.
-> One tag program per tag family — not one bespoke program per person.
+> Design rule: tags must be ordinary words a person would actually use.
+> 「你不要针对每个人都去开发一段程序，而是要根据标签来开发程序。」
 
 ### 7.1 被这条规则杀掉的 bug
 
 早期版本给 `d_type`（INTJ）预设写了 `knows_tech=True`，于是「超时/复盘」对他不翻译。
-**This was fabricated.** A personality tag alone never implied tech domain knowledge.
-Personality tags describe **how someone processes** information, not **which vocabulary they know** — two families, no cross-inference.
+**这是编的。** A personality preset only records personality. It never said this listener knows tech jargon.
+性格标签说的是**他怎么处理信息**，不是**他认识哪些词** —— 这是两个族，不能互推。
 
-### 7.2 标签库：120 个标签，12 族（`clarityime/cerome/tag_registry.py`）
+### 7.2 标签库：可搜索、双语、17 族（`clarityime/cerome/tag_registry.py`）
 
 按**真人自我描述的方式**设计，不是按我方便实现的方式。每个标签中英双语。
+具体作品（番/小说/剧/歌/游戏）几乎全是搜索可见；首屏爱好列表压在 20 个以内。
 
-| 族 | 数量 | 例子 | 能授予词汇？ | 能影响排版？ |
-|---|---|---|---|---|
-| **mbti** | 16 | INTJ·建筑师、ENFP·竞选者 | ❌ | ✅ 经八维 |
-| **function** 八维 | 8 | Ni 内倾直觉、Te 外倾思考 | ❌ | ✅ |
-| **bigfive** | 10 | 尽责性高、宜人性低、神经质高 | ❌ | ✅ |
-| **enneagram** 九型 | 9 | 3号·成就型、9号·和平型 | ❌ | ✅ |
-| **selfdesc** 怎么描述自己 | 6 | 爱用比喻／爱用数据／爱用故事／爱用标签 | ❌ | ✅ |
-| **source** 从哪认识的 | 7 | 网上测过 16personalities／上过心理学课／小红书刷到的／朋友说的 | ✅ | ✅ |
-| **hobby** 爱好 | 22 + **26 个具体游戏** | 打游戏 → 第五人格／原神／王者／Minecraft… | ✅ | 少数 ✅ |
-| **domain** | 24 | 技术、职场、校园…＋ **11 个游戏子圈**（moba/fps/gacha/asym_horror…） | ✅ | ❌ |
-| **register** 他怎么说话 | 8 | 说话很直、爱用「可能/好像」、爱用网络梗 | ❌ | ✅ |
-| **relation** | 7 | 老师、同学、好朋友、不熟的人 | ❌ | ✅ |
-| **lang** | 3 | 读中文／读英文／中英都行 | ❌ | ❌ |
-| **processing** | 11 | 先给结论、步骤分行、先给具体例子、术语一律解释 | — | 就是它本身 |
+| 族 | 例子 | 能授予词汇？ | 能影响排版？ |
+|---|---|---|---|
+| **mbti** | INTJ·建筑师、ENFP·竞选者 | ❌ | ✅ 经八维 |
+| **function** 八维 | Ni 内倾直觉、Te 外倾思考 | ❌ | ✅ |
+| **bigfive** | 尽责性高、宜人性低 | ❌ | ✅ |
+| **enneagram** 九型 | 3号·成就型 | ❌ | ✅ |
+| **selfdesc** | 爱用比喻／爱用数据 | ❌ | ✅ |
+| **source** | 网上测过／上过心理学课 | ✅ | ✅ |
+| **hobby** | 打游戏／二次元／看书／听歌 + 具体作品 | ✅ | 少数 ✅ |
+| **domain** | 技术、校园、网文、动漫、影视、饭圈… | ✅ | ❌ |
+| **edu** | IGCSE / IB / 本科 / 在学计算机 | ✅ | ❌ |
+| **topic** | 关心 AI／心理／计算机 | ✅ | ❌ |
+| **age** | 儿童／青少年／成年人 | ❌ | 仅儿童 ✅ |
+| **gender** | 女／男／非二元 | ❌ | ❌ 不改他/她 |
+| **place** | 中国／美国／日本／韩国… | ❌ | ❌ 不推语言 |
+| **register** | 说话很直、爱用网络梗 | ❌ | ✅ |
+| **relation** | 老师、同学、不熟的人 | ❌ | ✅ |
+| **lang** | 读中文／英文／日／韩 + 搜索更多 | ❌ | ❌（只选词表） |
+| **processing** | 先给结论、术语一律解释 | — | 就是它本身 |
 
 ### 7.2b 唯一允许的跨族推导
 
 ```
 人格/自评标签  →  PROCESSING   ✅  这正是这些量表测的东西
-任何东西       →  DOMAIN       ❌  除了 hobby / domain / source
-                                    —— 那三族说的是「他实际在做什么」
+任何东西       →  DOMAIN       ❌  除了 hobby / domain / source / edu / topic
+                                    —— 这五族说的是「他实际在做什么」
+年龄/性别/国家 →  DOMAIN       ❌  永远不推
+国家           →  reads_<lang> ❌  住日本 ≠ 读日语
 ```
 
-**你懂哪些词，取决于你在做什么，不取决于你是谁。** 所以只有 hobby / domain / source
-带 `grants`。`test_only_doing_families_grant_vocabulary` 遍历全部 120 条来守这一点，
-`test_no_personality_tag_grants_vocabulary` 对 43 个人格标签逐个查 `expand()` 结果为空。
+**你懂哪些词，取决于你在做什么，不取决于你是谁。** 所以只有 hobby / domain / source / edu / topic
+带 `grants`。`test_only_doing_families_grant_vocabulary` 遍历全部标签守这一点。
+儿童标签是唯一的人口统计学例外：它只加 PROCESSING（短句、术语全解释、先给具体例子），
+因为那是识字负荷，不是猜圈子。青少年不加 `define_terms`。
 
 MBTI → 排版走**八维**，不是硬编码 16 条：取主导 + 辅助功能，各自的 `implies` 求并。
 INTJ = Ni + Te → `context_first` + `conclusion_first` + `no_padding`。可审、可解释。
@@ -319,18 +329,18 @@ INFP = Fi（要流畅）+ Ne（要短行），同时声明的 load_sensitivity �
 ### 7.3 T1 改成按词的领域归属
 
 `JARGON_TABLE` 每条是 `词 → (白话, 领域)`。翻不翻译 =
-**这个词的领域**是否在**这个人声明的领域**里。同一个 D，声明 `tech` 前后：
+**这个词的领域**是否在**这个人声明的领域**里。同一位 INTJ 听者，声明 `tech` 前后：
 
 ```
-D（无 domain 标签）  因为接口老是响应太慢。
-D + tech,business    因为接口老是超时。
+INTJ（无 domain 标签）  因为接口老是响应太慢。
+INTJ + tech,business    因为接口老是超时。
 ```
 
 给已经懂「排期」的人翻译成「时间安排」反而更难读（Clark & Murphy 1982 audience design）。
 
 ### 7.4 「打游戏」不是一个标签，是 26 个
 
-**Gaming is not one tag — pick the specific title.** Different games use different jargon.
+the author 2026-08-13：「你要知道打游戏的话，那具体是什么游戏？不同的游戏，它的性格都不一样。」
 
 **为什么必须拆。** 游戏圈层之间是**互相听不懂**的，粗标签会在两边都判断错：
 
@@ -354,7 +364,11 @@ D + tech,business    因为接口老是超时。
 同时拿到 `asym_horror` + `gaming`，所以他既懂「守椅」也懂「开黑」。反过来只选
 「打游戏」就只拿通用词 —— **懒得挑的人不会因此被判断错，只是被判断得保守。**
 
-**Game → PROCESSING only records exposure facts, not personality.** Competitive shooters/MOBA → `short_chunks`
+番 / 小说 / 剧 / 歌同一套：点「二次元」拿 `anime`+`fandom` 通用圈词；搜「鬼灭」「柯南」
+才挂到具体作品。网文 → `webnovel`（金手指/穿越），韩剧/美剧 → `film_tv`（彩蛋/烂尾），
+韩团 → `idol`（出道/打投）。没有审计过的对应词就不类比，退回白话 T1。
+
+**游戏 → PROCESSING 只放曝光事实，不推性格。** 竞技射击/MOBA → `short_chunks`
 （习惯短促报点）；P 社/文字冒险 → `long_chunks`（习惯长文本）。这是「他每天读什么
 形状的字」，和「他是什么人」无关。多数游戏标签的 `implies` 是空的。
 
@@ -365,16 +379,17 @@ D + tech,business    因为接口老是超时。
 
 ### 7.5 标签越多，设置必须越简单
 
-Design goal: settings stay simple — usability over exhaustive taxonomy.
+the author 同一段：「不是为了真实性，不是为了专业，而是为了让用户能随时使用，
+能够轻易看懂，能够轻易设置。」所以细化的同时加了一层：
 
 | 机制 | 做什么 |
 |---|---|
-| `common` 标记 | 默认只显示常见的那几个，其余搜索可见 —— Q3 首屏 9 个而不是 48 个 |
+| `common` 标记 | 默认只显示常见的那几个，其余搜索可见 —— 爱好首屏 18 个，不是 88 个 |
 | `aliases` 别名 | 打「农药」「吃鸡」「idv」「mc」「lol」都能命中正确的游戏 |
 | `parent` 回滚 | 不想挑就点「打游戏」，一样能用 |
-| `quick_setup()` | 整个设置页 = **4 个问题**，全部可跳过，一个标签不填也能跑 |
+| `quick_setup()` | 整个设置页 = **5 个问题**，全部可跳过，一个标签不填也能跑 |
 
-四个问题就是：**他是什么 MBTI（不知道就跳过）／你们什么关系／他平时玩什么／他自己怎么说话。**
+五个问题就是：**MBTI（可跳过）／你们什么关系／他平时玩什么（游戏/番/小说/剧/歌都能搜）／年龄、国家、在读什么、关心什么、会读什么语言／他自己怎么说话。**
 
 HTTP：`GET /v1/tags?q=王者&lang=zh`（搜索）、`GET /v1/tags?all=1`（完整列表）、
 `GET /v1/tags/setup?lang=en`（整个设置流程一次拿到）。
@@ -382,7 +397,9 @@ HTTP：`GET /v1/tags?q=王者&lang=zh`（搜索）、`GET /v1/tags?all=1`（完�
 
 ### 7.6 黑话怎么来：爬虫找候选，人审核后才进表（不是 AI 猜）
 
-Public posts/comments are fair game for frequency mining; the hard constraint is **runtime** must not infer meanings — only use human-audited tables.
+the author 2026-08-14 纠正：公开数据本来就是给人看的,统计词频做资料是合理用途——之前把
+"爬虫"和"确定性可审计"混为一谈是错的,那条硬约束只管**运行时引擎怎么用词表**,
+不管**词表里的词最初怎么被发现**。
 
 三段流水线（`clarityime/clarify/glossary_mining.py`）：
 
@@ -392,33 +409,28 @@ Public posts/comments are fair game for frequency mining; the hard constraint is
 3. 人审                人读候选表，手写白话释义，才真正搬进 JARGON_TABLE
 ```
 
-Step 2 never guesses "what does this word mean?" — only: "is this term unusually frequent in this community vs others?" (`specificity`).
+第 2 步不判断"这个词是什么意思"——那是推断,是 the author 明确禁止的。它只回答一个事实
+问题："这个词在这个圈子里出现的频率，是不是明显高于其他圈子？"（`specificity`）。
 真正决定"翻译成什么"的，永远是人工审核这一步。
 
 `test_glossary_mining.py::test_mining_is_deterministic` 和
 `test_review_queue_never_touches_jargon_table` 守住两条线：同一批语料挖出来的候选
 顺序完全一样；候选队列文件只是给人看的，系统本身从不读它、不会自动升级成正式词条。
 
-### 7.7 语言：8 + 1 种新增，架构是「一种语言一张表」
+### 7.7 语言：架构是「一种语言一张表」
 
-Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-review pipeline.
+听者读哪种语言由 `reads_<code>` 决定（中/英/日/韩首屏可见，粤语、繁体、法德西阿葡俄意
+越泰印尼等靠搜索）。`ListenerPlan.reading_lang` 多选时取字典序最小，保证确定性。
 
-`JARGON_TABLES: dict[lang, dict[词, (白话, 领域)]]`——加一种语言 = 加一个条目，
-引擎本身（`simplify_jargon(..., lang=...)`）不用改。听者读哪种语言由
-`reads_<code>` 标签决定（`lang` 族现在是 9 个标签：zh/yue/en/ja/ko/fr/de/es/ar/pt），
-`ListenerPlan.reading_lang` 从标签里取，多选时取字典序最小的那个，保证确定性。
-
-**目前只有 `zh` 和 `en` 两张表填了真实词条**（`en` 是起步集：deadline/gg/gank/pity 等）。
-剩下 8 种语言的标签**已经可以选**（不会报"未知标签"），但对应的 `JARGON_TABLES["ja"]`
-等还是空表——选了这些语言的听者会跳过 T1 翻译,不会报错,也不会翻错。
-每加一种语言的真实词条，同样走 7.6 的三段流水线：采集该语言的公开语料 → 挖掘 →
-人工写白话 → 填进 `JARGON_TABLES[lang]`。
+`JARGON_TABLES` 目前填了 **zh / en / ja / ko**。繁体中文和粤语书面语走中文表
+（`canonical_jargon_lang`），不是另猜一套翻译。其余语言标签可选、不报错，只是 T1 空转。
+加一种语言的真实词条仍走 7.6：公开语料 → 挖掘 → **人写白话** → 进表。不从中文表自动翻译。
 
 ---
 
 ## 7bis. 口语化：一个一个判，不是一张黑名单
 
-> Some oral particles are noise; others carry discourse meaning — classify per occurrence.
+> the author：「有时候口语化可能会有意思，有时候口语化没有意思。」
 
 同样两个字，位置不同就是两个东西。`clarityime/clarify/oral.py` 对**每一次出现**给三种判决：
 
@@ -442,7 +454,8 @@ Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-revi
 
 ## 7ter. 意思要拆到细节，不是整句
 
-> Meaning is not one vague whole — preserve each detail unit, not just the sentence surface.
+> the author：「这个意思不是一个 vague 的意思，不是一个整体的意思，而是很细的
+> —— 每个细节可能都有意思，而不是一整个句子的意思。」
 
 `clarityime/clarify/details.py` 把每句拆成带角色的 **detail unit**：
 `stance / degree / epistemic / cause / concession / condition / request / negation / affect / sequence / quantity`。
@@ -458,7 +471,8 @@ Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-revi
 
 ## 7quater. 全平台怎么做到「对方总能看到原句」：链接，不是原生 UI
 
-> Cross-platform requirement: attach a link so recipients can always see the original text.
+> the author（2026-08-14）：「我希望全平台都可以支持……有没有其他办法？这些平台有没有
+> 什么共用的适配机制……我其实想在每条内容里都附带链接，让对方总能看到原句。」
 
 **先说清楚做不到的部分**：微信/QQ/Discord/Instagram/iMessage/WhatsApp 都不给
 第三方 app 在**对方**的聊天气泡里插自定义 UI，它们各自的「翻译」按钮是封闭的
@@ -471,7 +485,8 @@ Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-revi
 | **接收端**：Android AccessibilityService 读屏叠加翻译 | 仅 Android，iOS 无对应能力 | ⚠️ 脆、易随 UI 改版失效、Google Play 对滥用无障碍 API 有政策风险 |
 
 所以「全平台原生 UI」本身不是一个可行选项——但**链接**是，因为链接只是文本，
-而所有聊天软件都会把 `https://...` 自动变成可点击的东西。这正是「对方总能看到原句」
+而所有聊天软件都会把 `https://...` 自动变成可点击的东西。这正好等于 the author 想要的
+「对方总能看到原句」，用户不需要装任何 App。
 
 **为什么 payload 放在 URL 的 `#` 后面，而不是存在服务器上**：
 `https://clarityime.app/c#<payload>` —— `#` 之后的部分（fragment）浏览器
@@ -502,7 +517,8 @@ Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-revi
 
 ## 7quinquies. 不用每次手动建对象：反馈驱动的自动学习，像相册认脸
 
-> Users should not have to manually create an audience object for every recipient — learn from feedback like photo-app face learning (threshold 3, no LLM).
+> the author（2026-08-14）：「让每个人专门去给对方创建一个对象，有些人可能没有那个
+> 耐心……系统可以自动学习对方的喜好和消息风格，就像相册自动识别一样。」
 
 **这是不是在推翻 `cerome/tags.py` 那条「不许从标签推标签」的硬规则？** 不是，
 两者回答的是不同问题：
@@ -518,7 +534,8 @@ Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-revi
 
 **机制**（`clarityime/cerome/contact_learning.py`）：
 
-1. Recipient receives jargon simplified (e.g. 「ddl」→「截止时间」); sender rates it unnecessary.
+1. 对方发一条被简化过黑话的消息（比如把「ddl」翻成「截止时间」），the author 觉得
+   翻得没必要（对方明明听得懂），打差评。
 2. 系统只记一件事：「domain=tech 这一域，又被打了一次差评」。
 3. **连续净差评（差评数－好评数）≥ 3 次**（`AUTO_LEARN_THRESHOLD`）→ 自动给
    这个联系人挂上"他懂 tech 域"的标记，下次自动不再翻译这一域。
@@ -535,12 +552,45 @@ Roadmap: zh/en first; ja/ko/fr/de/es/ar/pt/yue tables follow the same human-revi
   这样就不会把一次具体的反馈过度泛化成整个人格画像。
 - **联系人可以从空对象开始**——不需要先做 `quick_setup()` 才能用。
   `ContactProfile(id=None, name="小明")` 就能直接收反馈，随对话自然长出
-  `auto_learned_domains` — no manual object setup required.
+  `auto_learned_domains`，这正是 the author 要的"不用每个人都手动建对象"。
 - **`define_terms` 标签仍然优先于自动学习**——用户显式要求"什么都给我解释"
   时，哪怕系统已经学到这个人懂某个域，也照样翻译，人的显式设置永远压过
   行为推断。
 - **确定性**：同一串反馈序列，无论何时重放，结果完全一样（见
   `tests/test_contact_learning.py::test_deterministic_same_sequence_same_outcome`）。
+
+**两条路径**（the author 2026-08-14：「默认对象可以给出提示……用户选择是或否之后，系统就会自动创建」）：
+
+| 当前听众 | 跨过阈值时发生什么 |
+|---|---|
+| **已选定某个对象** | 静默把域挂上这个对象，继续学。不弹窗。 |
+| **大众 / 默认对象（没选人）** | **不**偷偷建档。UI 问「要为他建一个新对象吗？」点「是」→ 自动创建 `对象 N`（也可自己起名）；点「否」→ 这次不建，计数清零，攒够新证据会再问一次。 |
+
+`GET /v1/contacts/suggestions` 列出待确认的提示；`POST /v1/feedback` 带 `resolve_suggestion` 回答。点「是」且没填名字时走 `next_auto_object_name()`，和相册「这是同一个人吗？→ 新建人物」一样。
+
+---
+
+## 7sexies. 跨圈类比混进日常输出（不是单独模式）
+
+> the author（2026-08-14）：「可以，混进去。」——听者不必先问「能不能用我那个游戏解释」。
+> 社区原话：「我是玩 A 的，能不能用 A 的方式给我解释一下这件事情是怎么发生的？」
+
+**这不是生成一段新解释。** 和 T1 同一条管线、同一套审计表：
+
+| 听者对这个词的域 | 输出 |
+|---|---|
+| **自己圈的词**（声明了 / 自动学到了） | 原词不动 |
+| **外圈，但表里有他圈的对应词** | 原词保留 + 夹一句「就像 X」：`守椅（就像架点）` |
+| **外圈，表里没有对应** | 原来的白话 T1：`守椅` → `守着倒地的人不走` |
+
+Gentner (1983) structure-mapping：类比传的是**角色**（守住倒地的人 ≈ 架住一个点），不是宣称两件事是同一个东西。所以原词留着，避免把第五人格说成 CS。
+
+**硬规则（和整份文档一致）**：
+
+- 映射是人手写的 `clarityime/clarify/analogy.py`，**不**从爬虫/AI 自动反推。没有行 = 不类比。
+- 多个他圈都有对应时，按 domain id 字母序取一个（与 `reading_lang` 同款确定性）。
+- `define_terms` 仍是「全部变白话」，不走类比。
+- 不另开模式、不加第二段话、不把原句换成另一句游戏攻略。
 
 ---
 

@@ -124,7 +124,7 @@ def render_lines(lines: list[list[str]]) -> str:
         body = "，".join(group)
         # Illocutionary force belongs to the whole utterance, not the last clause.
         # 「能不能晚一天交，因为我这周有点忙」is a request; ending it in 。 would
-        # silently turn a question into a statement (Searle 1969, speech acts).
+        # silently turn the author's question into a statement (Searle 1969, speech acts).
         out.append(body + _terminal(group[-1], force_question=any(map(_is_question, group))))
     return "\n".join(out)
 

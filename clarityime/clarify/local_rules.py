@@ -1,6 +1,6 @@
 """Local clarification rules — help *understanding*, never summarize.
 
-Design contract:
+Design contract (the author 2026-08-11):
   - Preserve propositions, hedging, attitude, and detail (还行 / 可能 / 感觉 …).
   - Remove only oral *noise* (嗯、那个啥、like), not meaning-bearing words (其实、比较).
   - Structured mode = readable layout (paragraph / sentence breaks), not bullet summaries.

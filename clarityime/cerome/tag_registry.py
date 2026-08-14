@@ -1,14 +1,17 @@
 """Tag registry — the vocabulary people actually use to describe themselves.
 
-Use tags that real people recognize (bilingual labels). Design rules:
+Design rule: tags must be ordinary words a person would actually use.
+
+Design rules that survive from the previous round:
 
 1. **A tag never implies a tag from another family**, with exactly one
    documented exception: personality/self-report tags may imply PROCESSING
    tags (how you take information in), because that is what those instruments
    measure. They may **never** imply DOMAIN tags — knowing someone is INTJ
    tells you nothing about whether they know 「排期」.
-2. Vocabulary you own comes from what you *do* (HOBBY, DOMAIN, SOURCE), which
-   is why those families — and only those — carry ``grants``.
+2. Vocabulary you own comes from what you *do* (HOBBY, DOMAIN, SOURCE, EDU,
+   TOPIC), which is why those families — and only those — carry ``grants``.
+   Age / gender / country never grant vocabulary and never pick a language.
 3. Every tag is bilingual. Labels switch; the speaker's words never do.
 
 Families
@@ -19,11 +22,16 @@ bigfive     OCEAN, high/low — the instrument academics actually trust
 enneagram   九型 1–9
 selfdesc    how this person describes themselves (metaphor? data? story?)
 source      where their self-knowledge came from — predicts their vocabulary
-hobby       爱好 — grants real vocabulary domains
-domain      professional / study fields
+hobby       爱好 + 具体作品（游戏/番/小说/剧/歌）— grants real vocabulary
+domain      professional / study / circle fields
+edu         在读课程 / 学历路径 — grants study-circle vocabulary
+topic       平时关心的话题 — grants the matching circle
+age         年龄段 — processing only for young children, never domains
+gender      性别 — stored only; we do not rewrite 他/她
+place       国家/地区 — stored only; never implies reads_<lang>
 register    how they themselves talk
 relation    the tie to the speaker
-lang        reading language
+lang        reading language (multi-select; most are search-only)
 processing  derived: how to lay text out for them
 """
 
@@ -283,8 +291,8 @@ _HOBBY = [
     # (id, zh, en, grants, common, aliases)
     ("hobby_gaming", "打游戏", "gaming", ("gaming",), True, ("游戏", "game", "玩游戏")),
     ("hobby_esports", "看电竞", "esports", ("gaming",), False, ("电竞", "比赛", "lpl")),
-    ("hobby_anime", "二次元/动漫", "anime & manga", ("fandom",), True, ("动漫", "番", "acg")),
-    ("hobby_kpop", "追星/饭圈", "fandom & idols", ("fandom",), True, ("追星", "偶像", "idol")),
+    ("hobby_anime", "二次元/动漫", "anime & manga", ("fandom", "anime"), True, ("动漫", "番", "acg", "二次元")),
+    ("hobby_kpop", "追星/饭圈", "fandom & idols", ("fandom", "idol"), True, ("追星", "偶像", "idol")),
     ("hobby_coding", "写代码", "coding", ("tech",), True, ("编程", "程序", "dev")),
     ("hobby_hardware", "折腾电脑硬件", "PC building", ("tech",), False, ("装机", "显卡", "pc")),
     ("hobby_photography", "摄影", "photography", ("art",), False, ("拍照", "相机")),
@@ -302,7 +310,7 @@ _HOBBY = [
     ("hobby_finance", "研究投资", "investing", ("finance",), False, ("炒股", "理财")),
     ("hobby_debate", "辩论", "debate", ("academic",), False, ("debate",)),
     ("hobby_volunteer", "志愿活动", "volunteering", (), False, ("义工",)),
-    ("hobby_film", "看电影/剧", "film & TV", ("art",), True, ("追剧", "电影")),
+    ("hobby_film", "看电影/剧", "film & TV", ("film_tv",), True, ("追剧", "电影", "美剧", "韩剧")),
 ]
 for _id, _z, _e, _gr, _c, _al in _HOBBY:
     _t(_id, "hobby", _z, _e, "该爱好自带的词汇算他懂", "vocabulary from this hobby counts as owned",
@@ -318,7 +326,7 @@ for _id, _z, _e, _gr, _c, _al in _HOBBY:
 # 拿到通用游戏词汇；愿意挑，就搜「王者」「idv」「genshin」直接命中。
 #
 # implies 只放「读字习惯」这类曝光事实（竞技游戏 = 习惯短促报点；剧情/策略游戏
-# = 习惯长文本），不推断 personality traits。
+# = 习惯长文本），不推断性格。
 # --------------------------------------------------------------------------- #
 
 _GAME = [
@@ -376,6 +384,78 @@ for _id, _z, _e, _gr, _imp, _c, _al in _GAME:
     _t(_id, "hobby", _z, _e, "他懂这个游戏圈的黑话", "owns this game's slang",
        implies=_imp, grants=_gr, parent="hobby_gaming", common=_c, aliases=_al)
 
+# 动漫 / 小说 / 剧 / 歌：和游戏同一套 —— 粗爱好拿通用词，具体作品才能对上黑话。
+# 全部 parent 回滚到 hobby_*，懒得挑不会判错，只是更保守。
+# 具体作品几乎全是 search-only（common=False）。点「二次元」拿通用圈词；
+# 搜「鬼灭」「三体」「韩剧」才对上更细的圈。首屏爱好列表必须 ≤20。
+_ANIME = [
+    ("anime_demon_slayer", "鬼灭之刃", "Demon Slayer", ("鬼灭", "kimetsu", "炭治郎")),
+    ("anime_onepiece", "海贼王", "One Piece", ("海贼", "one piece", "路飞")),
+    ("anime_naruto", "火影忍者", "Naruto", ("火影", "naruto")),
+    ("anime_jjk", "咒术回战", "Jujutsu Kaisen", ("咒术", "jjk")),
+    ("anime_conan", "名侦探柯南", "Detective Conan", ("柯南", "conan")),
+    ("anime_ghibli", "吉卜力 / 宫崎骏", "Studio Ghibli", ("宫崎骏", "千与千寻", "龙猫", "ghibli")),
+    ("anime_haikyuu", "排球少年", "Haikyuu", ("排少", "haikyuu")),
+    ("anime_spy", "间谍过家家", "Spy x Family", ("spy x family", "阿尼亚")),
+    ("anime_aot", "进击的巨人", "Attack on Titan", ("进击", "aot", "利威尔")),
+    ("anime_yourname", "你的名字 / 新海诚", "Your Name / Shinkai", ("你的名字", "新海诚", "天气之子")),
+    ("anime_eva", "EVA / 新世纪福音战士", "Neon Genesis Evangelion", ("eva", "福音战士", "绫波")),
+    ("anime_frieren", "葬送的芙莉莲", "Frieren", ("芙莉莲", "frieren")),
+    ("anime_bocchi", "孤独摇滚", "Bocchi the Rock", ("孤独摇滚", "bocchi", "波奇")),
+    ("anime_pokemon", "宝可梦", "Pokémon", ("宝可梦", "pokemon", "口袋妖怪")),
+    ("anime_db", "龙珠", "Dragon Ball", ("龙珠", "dragon ball", "悟空")),
+]
+for _id, _z, _e, _al in _ANIME:
+    _t(_id, "hobby", _z, _e, "他懂这部番的梗和说法", "owns this title's slang",
+       grants=("anime",), parent="hobby_anime", common=False, aliases=_al)
+
+_NOVEL = [
+    ("novel_web", "网文 / 网络小说", "web novels", True, ("网文", "起点", "晋江", "番茄", "网络小说")),
+    ("novel_xuanhuan", "玄幻", "xuanhuan", False, ("玄幻", "修仙")),
+    ("novel_wuxia", "武侠", "wuxia", False, ("武侠", "金庸", "古龙")),
+    ("novel_romance", "言情", "romance novels", False, ("言情", "甜宠", "虐文")),
+    ("novel_hp", "哈利波特", "Harry Potter", False, ("hp", "哈利波特", "霍格沃茨", "muggle")),
+    ("novel_threebody", "三体", "The Three-Body Problem", False, ("三体", "刘慈欣")),
+    ("novel_lotr", "魔戒 / 托尔金", "Lord of the Rings", False, ("魔戒", "霍比特人", "tolkien", "lotr")),
+    ("novel_danmei", "耽美 / 晋江", "danmei", False, ("耽美", "晋江", "mxtx", "魔道祖师")),
+    ("novel_dune", "沙丘", "Dune", False, ("沙丘", "dune")),
+    ("novel_classics_cn", "中国古典小说", "Chinese classics", False, ("红楼梦", "西游记", "三国", "水浒")),
+]
+for _id, _z, _e, _c, _al in _NOVEL:
+    _web = _id in ("novel_web", "novel_xuanhuan", "novel_wuxia", "novel_romance", "novel_danmei")
+    _t(_id, "hobby", _z, _e, "他懂这类书的说法", "owns this reading-circle slang",
+       grants=("webnovel",) if _web else ("fandom",),
+       parent="hobby_reading", common=_c, aliases=_al)
+
+_FILM = [
+    ("film_marvel", "漫威", "Marvel", ("漫威", "marvel", "复联", "复仇者")),
+    ("film_starwars", "星球大战", "Star Wars", ("星战", "star wars", "绝地")),
+    ("film_disney", "迪士尼", "Disney", ("迪士尼", "disney", "皮克斯")),
+    ("film_ghibli_live", "宫崎骏电影", "Ghibli films", ("千与千寻", "哈尔的移动城堡")),
+    ("tv_kdrama", "韩剧", "K-drama", ("韩剧", "kdrama", "韩剧迷")),
+    ("tv_cdrama", "国产剧 / 港剧", "C-drama", ("国产剧", "港剧", "电视剧", "甄嬛传")),
+    ("tv_jdrama", "日剧", "J-drama", ("日剧", "jdrama")),
+    ("tv_us", "英美剧", "US/UK TV", ("美剧", "英剧", "netflix", "权力的游戏", "老友记")),
+]
+for _id, _z, _e, _al in _FILM:
+    _t(_id, "hobby", _z, _e, "他懂这部片/剧的梗", "owns this screen-circle slang",
+       grants=("film_tv",), parent="hobby_film", common=False, aliases=_al)
+
+_MUSIC = [
+    ("music_c_pop", "华语流行", "C-pop", ("华语", "华语歌", "周杰伦", "汪苏泷", "邓丽君")),
+    ("music_kpop_group", "韩团", "K-pop groups", ("韩团", "bts", "blackpink", "twice", "kpop")),
+    ("music_jpop", "日本流行", "J-pop", ("jpop", "日推", "j-pop")),
+    ("music_western_pop", "欧美流行", "Western pop", ("欧美", "泰勒", "taylor", "swift")),
+    ("music_hiphop", "说唱 / 嘻哈", "hip-hop", ("说唱", "rap", "嘻哈")),
+    ("music_classical", "古典乐", "classical", ("古典", "交响乐", "莫扎特")),
+    ("music_ost", "影视原声", "soundtracks", ("ost", "原声", "配乐")),
+]
+for _id, _z, _e, _al in _MUSIC:
+    extra = ("idol",) if _id == "music_kpop_group" else ()
+    _t(_id, "hobby", _z, _e, "他懂这个乐圈的说法", "owns this music-circle slang",
+       grants=("music",) + extra, parent="hobby_music_listen", common=False, aliases=_al,
+       implies=("long_chunks",) if _id == "music_classical" else ())
+
 # --------------------------------------------------------------------------- #
 # DOMAIN — declared knowledge fields. Still the only source of "owns vocabulary".
 # --------------------------------------------------------------------------- #
@@ -406,13 +486,17 @@ _DOMAIN = [
     ("rhythm_game", "音游", "rhythm game slang"),
     ("souls", "魂系", "soulslike slang"),
     ("narrative_game", "剧情/文字游戏", "narrative game slang"),
+    ("anime", "动漫/二次元", "anime slang"),
+    ("webnovel", "网文", "web-novel slang"),
+    ("film_tv", "影视剧", "film & TV slang"),
+    ("idol", "饭圈应援", "idol-fandom slang"),
 ]
 for _id, _z, _e in _DOMAIN:
     _t(_id, "domain", _z, _e, "他已经拥有这套词汇", "already owns this vocabulary",
        grants=(_id,))
 
 # --------------------------------------------------------------------------- #
-# REGISTER — how they themselves talk (match their usual register).
+# REGISTER — how they themselves talk. the author: 「参考他平常说话的语气」
 # --------------------------------------------------------------------------- #
 
 _REG = [
@@ -446,29 +530,217 @@ for _id, _z, _e, _imp in _REL:
     _t(_id, "relation", _z, _e, implies=_imp, common=True)
 
 _LANG = [
-    # (id, zh, en, aliases — ISO code + common self-names)
-    ("reads_zh", "读中文（普通话）", "reads Chinese (Mandarin)", ("zh", "chinese", "mandarin", "中文")),
-    ("reads_yue", "读粤语", "reads Cantonese", ("yue", "cantonese", "粤语", "广东话")),
-    ("reads_en", "读英文", "reads English", ("en", "english", "英文")),
-    ("reads_ja", "读日语", "reads Japanese", ("ja", "japanese", "日语", "日文")),
-    ("reads_ko", "读韩语", "reads Korean", ("ko", "korean", "韩语", "韩文")),
-    ("reads_fr", "读法语", "reads French", ("fr", "french", "法语")),
-    ("reads_de", "读德语", "reads German", ("de", "german", "德语")),
-    ("reads_es", "读西班牙语", "reads Spanish", ("es", "spanish", "西班牙语")),
-    ("reads_ar", "读阿拉伯语", "reads Arabic", ("ar", "arabic", "阿拉伯语")),
-    ("reads_pt", "读葡萄牙语", "reads Portuguese", ("pt", "portuguese", "葡萄牙语")),
+    # (id, zh, en, common, aliases). 首屏只放中/英/日/韩；其余全靠搜索。
+    ("reads_zh", "读中文（普通话）", "reads Chinese (Mandarin)", True,
+     ("zh", "chinese", "mandarin", "中文", "普通话")),
+    ("reads_zh_hant", "读繁体中文", "reads Traditional Chinese", False,
+     ("zh-hant", "繁体", "繁體", "taiwanese chinese")),
+    ("reads_yue", "读粤语", "reads Cantonese", False, ("yue", "cantonese", "粤语", "广东话")),
+    ("reads_en", "读英文", "reads English", True, ("en", "english", "英文")),
+    ("reads_ja", "读日语", "reads Japanese", True, ("ja", "japanese", "日语", "日文")),
+    ("reads_ko", "读韩语", "reads Korean", True, ("ko", "korean", "韩语", "韩文")),
+    ("reads_fr", "读法语", "reads French", False, ("fr", "french", "法语")),
+    ("reads_de", "读德语", "reads German", False, ("de", "german", "德语")),
+    ("reads_es", "读西班牙语", "reads Spanish", False, ("es", "spanish", "西班牙语")),
+    ("reads_pt", "读葡萄牙语", "reads Portuguese", False, ("pt", "portuguese", "葡萄牙语")),
+    ("reads_ar", "读阿拉伯语", "reads Arabic", False, ("ar", "arabic", "阿拉伯语")),
+    ("reads_ru", "读俄语", "reads Russian", False, ("ru", "russian", "俄语")),
+    ("reads_it", "读意大利语", "reads Italian", False, ("it", "italian", "意大利语")),
+    ("reads_vi", "读越南语", "reads Vietnamese", False, ("vi", "vietnamese", "越南语")),
+    ("reads_th", "读泰语", "reads Thai", False, ("th", "thai", "泰语")),
+    ("reads_id", "读印尼语", "reads Indonesian", False, ("id", "indonesian", "印尼语")),
+    ("reads_ms", "读马来语", "reads Malay", False, ("ms", "malay", "马来语")),
+    ("reads_hi", "读印地语", "reads Hindi", False, ("hi", "hindi", "印地语")),
+    ("reads_bn", "读孟加拉语", "reads Bengali", False, ("bn", "bengali", "孟加拉语")),
+    ("reads_ta", "读泰米尔语", "reads Tamil", False, ("ta", "tamil", "泰米尔语")),
+    ("reads_ur", "读乌尔都语", "reads Urdu", False, ("ur", "urdu", "乌尔都语")),
+    ("reads_nl", "读荷兰语", "reads Dutch", False, ("nl", "dutch", "荷兰语")),
+    ("reads_pl", "读波兰语", "reads Polish", False, ("pl", "polish", "波兰语")),
+    ("reads_tr", "读土耳其语", "reads Turkish", False, ("tr", "turkish", "土耳其语")),
+    ("reads_sv", "读瑞典语", "reads Swedish", False, ("sv", "swedish", "瑞典语")),
+    ("reads_uk", "读乌克兰语", "reads Ukrainian", False, ("uk", "ukrainian", "乌克兰语")),
+    ("reads_tl", "读菲律宾语", "reads Filipino", False, ("tl", "filipino", "tagalog", "菲律宾语")),
+    ("reads_fa", "读波斯语", "reads Persian", False, ("fa", "persian", "farsi", "波斯语")),
+    ("reads_he", "读希伯来语", "reads Hebrew", False, ("he", "hebrew", "希伯来语")),
+    ("reads_el", "读希腊语", "reads Greek", False, ("el", "greek", "希腊语")),
+    ("reads_cs", "读捷克语", "reads Czech", False, ("cs", "czech", "捷克语")),
+    ("reads_ro", "读罗马尼亚语", "reads Romanian", False, ("ro", "romanian", "罗马尼亚语")),
+    ("reads_hu", "读匈牙利语", "reads Hungarian", False, ("hu", "hungarian", "匈牙利语")),
+    ("reads_fi", "读芬兰语", "reads Finnish", False, ("fi", "finnish", "芬兰语")),
+    ("reads_no", "读挪威语", "reads Norwegian", False, ("no", "norwegian", "挪威语")),
+    ("reads_da", "读丹麦语", "reads Danish", False, ("da", "danish", "丹麦语")),
+    ("reads_sw", "读斯瓦希里语", "reads Swahili", False, ("sw", "swahili", "斯瓦希里语")),
+    ("reads_my", "读缅甸语", "reads Burmese", False, ("my", "burmese", "缅甸语")),
+    ("reads_km", "读高棉语", "reads Khmer", False, ("km", "khmer", "高棉语", "柬埔寨语")),
 ]
-for _id, _z, _e, _al in _LANG:
-    _t(_id, "lang", _z, _e, common=True, aliases=_al)
-# 「中英都行」这类多语能力不是单独一个标签——lang 族本身允许多选（勾几个会读的语言即可），
-# 不需要为每一种「两两组合」（中英/中日/英法…）单独造词条。
+for _id, _z, _e, _c, _al in _LANG:
+    _t(_id, "lang", _z, _e, common=_c, aliases=_al)
+# 「中英都行」不是单独标签——lang 族允许多选。
+# 国家 ≠ 语言：住日本不会自动挂 reads_ja（侨民、国际学校、家里说中文都常见）。
+
+# --------------------------------------------------------------------------- #
+# AGE / GENDER / PLACE — 存档用。不授予词汇，不改人称代词，不从国家推语言。
+# 唯一例外：很小的孩子需要更短、更具体、术语全解释（曝光事实，不是性格）。
+# 青少年不加 define_terms——15 岁听得懂圈子词。
+# --------------------------------------------------------------------------- #
+
+_AGE = [
+    ("age_child", "儿童（大约 12 岁以下）", "child (about 12 or under)", True,
+     ("short_chunks", "define_terms", "concrete_first"),
+     ("小孩", "儿童", "kid", "child")),
+    ("age_teen", "青少年", "teen", True, (),
+     ("青少年", "teen", "teenager", "中学生")),
+    ("age_uni", "大学生", "university age", False, (),
+     ("大学生", "uni", "college")),
+    ("age_adult", "已工作的成年人", "working adult", True, (),
+     ("成年人", "adult", "上班")),
+    ("age_elder", "长辈", "older adult", False, (),
+     ("长辈", "老人", "elder")),
+]
+for _id, _z, _e, _c, _imp, _al in _AGE:
+    _t(_id, "age", _z, _e, implies=_imp, common=_c, aliases=_al)
+
+_GENDER = [
+    ("gender_female", "女", "female", True, ("女生", "女", "girl", "woman")),
+    ("gender_male", "男", "male", True, ("男生", "男", "boy", "man")),
+    ("gender_nb", "非二元 / 不愿标注", "non-binary / unspecified", True,
+     ("非二元", "nb", "nonbinary", "不愿说")),
+]
+for _id, _z, _e, _c, _al in _GENDER:
+    _t(_id, "gender", _z, _e, common=_c, aliases=_al)
+
+_PLACE = [
+    ("place_cn", "中国大陆", "mainland China", True, ("中国", "大陆", "china", "cn")),
+    ("place_us", "美国", "United States", True, ("美国", "usa", "us", "america")),
+    ("place_jp", "日本", "Japan", True, ("日本", "japan", "jp")),
+    ("place_kr", "韩国", "South Korea", True, ("韩国", "korea", "kr")),
+    ("place_uk", "英国", "United Kingdom", False, ("英国", "uk", "britain", "england")),
+    ("place_sg", "新加坡", "Singapore", False, ("新加坡", "sg", "singapore")),
+    ("place_tw", "台湾", "Taiwan", False, ("台湾", "taiwan", "tw")),
+    ("place_hk", "香港", "Hong Kong", False, ("香港", "hong kong", "hk")),
+    ("place_ca", "加拿大", "Canada", False, ("加拿大", "canada")),
+    ("place_au", "澳大利亚", "Australia", False, ("澳洲", "澳大利亚", "australia")),
+    ("place_fr", "法国", "France", False, ("法国", "france")),
+    ("place_de", "德国", "Germany", False, ("德国", "germany")),
+    ("place_es", "西班牙", "Spain", False, ("西班牙", "spain")),
+    ("place_it", "意大利", "Italy", False, ("意大利", "italy")),
+    ("place_ru", "俄罗斯", "Russia", False, ("俄罗斯", "russia")),
+    ("place_in", "印度", "India", False, ("印度", "india")),
+    ("place_th", "泰国", "Thailand", False, ("泰国", "thailand")),
+    ("place_vn", "越南", "Vietnam", False, ("越南", "vietnam")),
+    ("place_id", "印度尼西亚", "Indonesia", False, ("印尼", "indonesia")),
+    ("place_my", "马来西亚", "Malaysia", False, ("马来西亚", "malaysia")),
+    ("place_ph", "菲律宾", "Philippines", False, ("菲律宾", "philippines")),
+    ("place_br", "巴西", "Brazil", False, ("巴西", "brazil")),
+    ("place_mx", "墨西哥", "Mexico", False, ("墨西哥", "mexico")),
+    ("place_nz", "新西兰", "New Zealand", False, ("新西兰", "new zealand")),
+    ("place_nl", "荷兰", "Netherlands", False, ("荷兰", "netherlands")),
+    ("place_tr", "土耳其", "Turkey", False, ("土耳其", "turkey")),
+    ("place_ae", "阿联酋", "UAE", False, ("阿联酋", "dubai", "uae")),
+    ("place_sa", "沙特阿拉伯", "Saudi Arabia", False, ("沙特", "saudi")),
+]
+for _id, _z, _e, _c, _al in _PLACE:
+    _t(_id, "place", _z, _e, common=_c, aliases=_al)
+
+# --------------------------------------------------------------------------- #
+# EDU / TOPIC — 「在读什么 / 关心什么」是正在做的事，所以可以 grants。
+# --------------------------------------------------------------------------- #
+
+_EDU = [
+    ("edu_myp", "MYP / 国际学校初中", "MYP / middle years", False, ("school",),
+     ("myp", "国际学校")),
+    ("edu_igcse", "IGCSE", "IGCSE", True, ("school",),
+     ("igcse", "ig", "gcse")),
+    ("edu_ib", "IB", "IB Diploma", True, ("school", "academic"),
+     ("ib", "ibdp", "diploma")),
+    ("edu_ap", "AP", "AP courses", False, ("school", "academic"),
+     ("ap", "ap课")),
+    ("edu_alevel", "A-Level", "A-Level", False, ("school",),
+     ("alevel", "a-level", "a level")),
+    ("edu_gaokao", "高考", "Gaokao", False, ("school",),
+     ("高考", "gaokao")),
+    ("edu_undergrad", "大学本科", "undergraduate", True, ("academic",),
+     ("本科", "大学", "undergrad", "bachelor")),
+    ("edu_grad", "研究生", "graduate school", False, ("academic",),
+     ("研究生", "硕士", "博士", "phd")),
+    ("course_cs", "在学计算机", "studying CS", False, ("tech",),
+     ("计算机课", "cs课", "编程课")),
+    ("course_psych", "在学心理", "studying psychology", False, ("psych_pop",),
+     ("心理课", "心理学")),
+    ("course_math", "在学数学", "studying math", False, ("academic",),
+     ("数学课", "math")),
+    ("course_physics", "在学物理", "studying physics", False, ("academic",),
+     ("物理课", "physics")),
+    ("course_chem", "在学化学", "studying chemistry", False, ("academic",),
+     ("化学课", "chemistry")),
+    ("course_bio", "在学生物", "studying biology", False, ("academic",),
+     ("生物课", "biology")),
+    ("course_business", "在学商科", "studying business", False, ("business",),
+     ("商科", "business课")),
+    ("course_art", "在学艺术", "studying art", False, ("art",),
+     ("艺术课", "美术")),
+    ("course_english", "在学英语文学", "studying English", False, ("academic",),
+     ("英语课", "english lit")),
+    ("course_history", "在学历史", "studying history", False, ("academic",),
+     ("历史课", "history")),
+    ("course_drama", "在学戏剧", "studying drama", False, ("art",),
+     ("戏剧课", "drama")),
+    ("course_music", "在学音乐", "studying music", False, ("music",),
+     ("音乐课",)),
+]
+for _id, _z, _e, _c, _gr, _al in _EDU:
+    _t(_id, "edu", _z, _e, "在读这条路径/这门课，相关说法算他懂",
+       "studying this, so the circle's vocabulary counts as owned",
+       grants=_gr, common=_c, aliases=_al)
+
+_TOPIC = [
+    ("topic_ai", "关心 AI", "follows AI", True, ("tech",),
+     ("人工智能", "ai", "机器学习")),
+    ("topic_cs", "关心计算机", "follows CS", True, ("tech",),
+     ("计算机", "编程", "cs")),
+    ("topic_psych", "关心心理", "follows psychology", True, ("psych_pop",),
+     ("心理", "心理学", "mbti研究")),
+    ("topic_finance", "关心财经", "follows finance", False, ("finance",),
+     ("财经", "投资", "股市")),
+    ("topic_climate", "关心气候/环境", "follows climate", False, ("academic",),
+     ("气候", "环境", "climate")),
+    ("topic_startups", "关心创业", "follows startups", False, ("business",),
+     ("创业", "startup")),
+    ("topic_edu", "关心教育", "follows education", False, ("school",),
+     ("教育", "升学")),
+    ("topic_philosophy", "关心哲学", "follows philosophy", False, ("academic",),
+     ("哲学", "philosophy")),
+    ("topic_history", "关心历史", "follows history", False, ("academic",),
+     ("历史", "history")),
+    ("topic_ling", "关心语言", "follows linguistics", False, ("academic",),
+     ("语言学", "linguistics")),
+    ("topic_neuro", "关心神经科学", "follows neuroscience", False, ("psych_pop",),
+     ("神经科学", "neuroscience", "大脑")),
+    ("topic_law", "关心法律", "follows law", False, ("legal",),
+     ("法律", "law")),
+    ("topic_health", "关心健康", "follows health", False, (),
+     ("健康", "养生")),  # 聊天关心健康 ≠ 拥有医学黑话
+    ("topic_sports", "关心体育", "follows sports", False, ("sports",),
+     ("体育", "球赛")),
+    ("topic_games", "关心游戏圈新闻", "follows gaming news", False, ("gaming",),
+     ("游戏圈", "电竞新闻")),
+    ("topic_anime", "关心漫圈新闻", "follows anime news", False, ("anime",),
+     ("漫圈", "番剧新闻")),
+    ("topic_film", "关心影视新闻", "follows film news", False, ("film_tv",),
+     ("影视圈", "电影新闻")),
+]
+for _id, _z, _e, _c, _gr, _al in _TOPIC:
+    _t(_id, "topic", _z, _e, "他在跟这个话题，相关说法算他懂",
+       "following this topic, so the circle's vocabulary counts as owned",
+       grants=_gr, common=_c, aliases=_al)
 
 
 REGISTRY: dict[str, TagDef] = {d.id: d for d in _D}
 
 FAMILIES: tuple[str, ...] = (
     "mbti", "function", "bigfive", "enneagram", "selfdesc", "source",
-    "hobby", "domain", "register", "relation", "lang", "processing",
+    "hobby", "domain", "edu", "topic", "age", "gender", "place",
+    "register", "relation", "lang", "processing",
 )
 
 
@@ -531,28 +803,43 @@ def search(query: str, lang: str = "zh", limit: int = 12) -> list[dict[str, str]
 
 
 #: 设置页要问的问题，问完就能用。全部可跳过，一个标签不填也能跑。
+#: 第 4 问把年龄/性别/国家/学历/话题/语言并在一起，免得变成问卷。
 SETUP_STEPS: tuple[dict[str, object], ...] = (
     {"family": "mbti", "multi": False,
      "zh": "他是什么 MBTI？（不知道就跳过）", "en": "Their MBTI? (skip if unsure)"},
     {"family": "relation", "multi": False,
      "zh": "你们是什么关系？", "en": "How do you know them?"},
     {"family": "hobby", "multi": True,
-     "zh": "他平时玩什么、喜欢什么？", "en": "What are they into?"},
+     "zh": "他平时玩什么、喜欢什么？（游戏/番/小说/剧/歌都能搜）",
+     "en": "What are they into? (games, anime, books, shows, music — search works)"},
+    {"family": "life", "families": ("age", "gender", "place", "edu", "topic", "lang"),
+     "multi": True,
+     "zh": "年龄、国家、在读什么、关心什么、会读什么语言？",
+     "en": "Age, country, what they study, what they follow, which languages they read?"},
     {"family": "register", "multi": True,
      "zh": "他自己说话什么风格？", "en": "How do they talk?"},
 )
 
 
 def quick_setup(lang: str = "zh", full: bool = False) -> list[dict[str, object]]:
-    """The whole settings flow: 4 questions, common options only.
+    """The whole settings flow: 5 questions, common options only.
 
     ``full=True`` returns every option in the family (the "更多" list behind
-    the search box).
+    the search box). The life step unions several families so the picker
+    stays one screen.
     """
     out: list[dict[str, object]] = []
     for step in SETUP_STEPS:
-        opts = [r for r in catalog(lang, str(step["family"]))
-                if full or r["common"]]
+        fams = step.get("families") or (step["family"],)
+        opts: list[dict[str, str]] = []
+        seen: set[str] = set()
+        for fam in fams:
+            for r in catalog(lang, str(fam)):
+                if r["id"] in seen:
+                    continue
+                if full or r["common"]:
+                    seen.add(r["id"])
+                    opts.append(r)
         out.append({
             "family": step["family"],
             "question": step["zh" if lang.startswith("zh") else "en"],
@@ -565,11 +852,12 @@ def quick_setup(lang: str = "zh", full: bool = False) -> list[dict[str, object]]
 def expand(declared: set[str]) -> tuple[set[str], set[str]]:
     """Declared tags → (processing tags, owned jargon domains).
 
-    Only ``grants`` produces domains, and only HOBBY / DOMAIN / SOURCE tags
-    carry ``grants``. Personality families cannot reach this set.
+    Only ``grants`` produces domains, and only HOBBY / DOMAIN / SOURCE / EDU /
+    TOPIC tags carry ``grants``. Personality, age, gender, country, and
+    reading-language families cannot reach this set.
 
     Picking a child rolls up to its parent: 选「第五人格」自动也算「打游戏」，
-    所以他既懂 ``asym_horror`` 也懂通用的 ``gaming`` 词汇。
+    所以他既懂 ``asym_horror`` 也懂通用的 ``gaming`` 词汇。番/小说/剧同理。
     """
     processing: set[str] = set()
     domains: set[str] = set()

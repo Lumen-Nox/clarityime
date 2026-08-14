@@ -1,7 +1,7 @@
 """Listener tags — the ONLY thing rules are allowed to key on.
 
 Hard rule:
-    Rules key on **tags**, not on people; **never infer one tag from another** (one documented exception below).
+    规则按**标签**写，不按人写；**不许从一个标签推另一个标签**（唯一例外见下）。
 
 The bug this file exists to prevent: reading "INTJ" and concluding "knows tech
 jargon". Personality says how someone *processes*; it says nothing about what
@@ -12,15 +12,17 @@ The one licensed derivation
     personality / self-report  →  PROCESSING     ✅  that is what those
                                                      instruments measure
     anything                   →  DOMAIN         ❌  except HOBBY / DOMAIN /
-                                                     SOURCE tags, which are
-                                                     statements about what the
-                                                     person actually does
+                                                     SOURCE / EDU / TOPIC tags,
+                                                     which are statements about
+                                                     what the person actually does
+                                                     (studies, follows, plays)
 
 Enforced at runtime by an assert in :func:`derive_processing_tags` and by
 ``tests/test_comprehension.py::test_personality_never_implies_domain_knowledge``.
 
 The vocabulary itself lives in :mod:`clarityime.cerome.tag_registry` (bilingual,
-~110 tags across 12 families).
+searchable tags across 17 families). Age, gender, and country never grant
+vocabulary and never pick a reading language.
 """
 
 from __future__ import annotations
@@ -81,7 +83,7 @@ class ListenerTags:
         return tag in self.tags
 
     def domains(self) -> frozenset[str]:
-        """Vocabulary this person owns — from DOMAIN, HOBBY and SOURCE grants."""
+        """Vocabulary this person owns — from DOMAIN, HOBBY, SOURCE, EDU, TOPIC grants."""
         _, granted = expand(set(self.tags))
         return frozenset(granted)
 

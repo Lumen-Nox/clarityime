@@ -4,7 +4,7 @@
 
 Speak or type, then ClarityIME rearranges the same propositions so the *listener* spends less effort: referents land, claims come first, jargon is tabled by a declared domain. It then commits text into the focused field. Nothing is summarized. Stance, hedges, and questions stay as they were.
 
-This is the public repository for GOAI 2026 Boundless Agents (AI + Education). Apache-2.0. Author: **Lumen**.
+This is the public repository for GOAI 2026 Boundless Agents (AI + Education). Apache-2.0. Author: **Lumen**. Judge map: [docs/GOAI_2026.md](docs/GOAI_2026.md).
 
 https://github.com/Lumen-Nox/clarityime
 
@@ -16,7 +16,8 @@ Microphone / typed text / platform ASR
 Local rules (fillers, CJK spacing) — still the speaker's words
         ↓
 Comprehension ops keyed on listener tags
-  (referents, claim-first, working-memory chunks, jargon table)
+  (referents, claim-first, working-memory chunks, jargon table,
+   audited cross-circle analogies mixed into the same sentence)
         ↓
 Optional share link  https://clarityime.app/c#<fragment>
   (payload lives in the URL fragment; a server never sees the message)
@@ -39,12 +40,13 @@ Budgets follow Cowan (2001) and Sweller (1988). Invariants (no new content, no l
 
 Public preset names: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved contact carries its own tag set instead.
 
-## What is in this version (0.5.0)
+## What is in this version (0.6.0)
 
 | Piece | What a judge can check |
 |---|---|
-| Tag registry | Human-readable tags. A personality tag **never** implies domain knowledge (INTJ ≠ knows tech jargon). |
-| Jargon table | Fixed local substitutions in `clarify/paraphrase.py`, audited, 1:1 synonym. Circle-insiders keep the term. |
+| Tag registry | 17 families, ~310 bilingual tags. Personality **never** implies domain knowledge. **edu / topic** grant study-circle vocabulary; **age / gender / place never** grant words or pick a language. |
+| Cross-circle analogies | Audited 1:1 table in `clarify/analogy.py`. A listener who owns FPS hears `守椅（就像架点）` — same proposition, their word. No owned analog → plain T1 jargon. No LLM. |
+| Jargon table | Fixed local substitutions in `clarify/paraphrase.py`. Circle-insiders keep the term. |
 | Contact learning | Count ratings per contact. Threshold **3**, no LLM. Same evidence → same outcome. |
 | Share link | `encode` / `decode` round-trip in tests. The viewer page at `clarityime.app` is **not deployed yet**; the fragment protocol is real. |
 | Determinism | `tests/test_determinism.py` AST-scans `clarify/` for `random` / HTTP / LLM imports. |

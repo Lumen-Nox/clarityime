@@ -1,4 +1,4 @@
-# ClarityIME · Integrated IME architecture (v0.5)
+# ClarityIME · Integrated IME architecture (v0.6)
 
 ## Core principle
 
@@ -22,8 +22,8 @@ ClarityIME is an **integrated input method**, not a floating dictation overlay. 
 | Path | Platform | Role |
 |------|----------|------|
 | `clarityime/server.py` | All | Local HTTP API |
-| `clarityime/clarify/` | All | Offline meaning-preserving clarify engine |
-| `clarityime/cerome/` | All | Audience / speaker tagging for routing |
+| `clarityime/clarify/` | All | Offline meaning-preserving clarify engine (jargon + audited analogies) |
+| `clarityime/cerome/` | All | Audience / speaker tagging for routing (17 families) |
 | `platforms/android/ClarityIME/` | Android | **InputMethodService** + SpeechRecognizer |
 | `platforms/windows/ClarityIMEHost/` | Windows | Tray host → capture → candidates → paste |
 | `platforms/windows/ClarityIMETSF/` | Windows | TSF system IME · F9 → core → insert |

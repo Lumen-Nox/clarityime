@@ -75,7 +75,7 @@ class RegistryIntegrityTests(unittest.TestCase):
 
     def test_only_doing_families_grant_vocabulary(self) -> None:
         """You own words because of what you DO, not because of who you are."""
-        allowed = {"domain", "hobby", "source"}
+        allowed = {"domain", "hobby", "source", "edu", "topic"}
         for tid, d in REGISTRY.items():
             if d.grants:
                 self.assertIn(d.family, allowed, f"{tid} ({d.family}) grants vocabulary")
@@ -161,10 +161,17 @@ class GameGranularityTests(unittest.TestCase):
         who = replace(PRESETS["a_type"], tags=["mbti_entp", *tags])
         return adapt_with_report(original, who).text
 
-    def test_idv_player_keeps_idv_slang_but_not_gacha_slang(self) -> None:
+    def test_fps_player_hears_idv_as_an_analogy_not_a_lecture(self) -> None:
+        out = self._say("game_valorant")
+        self.assertIn("守椅", out)
+        self.assertIn("架点", out)
+        self.assertIn("就像", out)
+        self.assertNotIn("保底", out)
+
+    def test_idv_player_does_not_get_an_analogy_for_their_own_slang(self) -> None:
         out = self._say("game_idv")
-        self.assertIn("守椅", out)          # 他每天都在说
-        self.assertNotIn("保底", out)       # 抽卡圈的词，他不一定懂
+        self.assertIn("守椅", out)
+        self.assertNotIn("就像", out)
 
     def test_gacha_player_is_the_mirror_image(self) -> None:
         out = self._say("game_genshin")
@@ -235,6 +242,10 @@ class MultiLanguageJargonTests(unittest.TestCase):
         for code in ("ja", "ko", "fr", "de", "es", "ar", "pt", "yue"):
             self.assertIn(f"reads_{code}", REGISTRY, f"missing reads_{code}")
 
+    def test_more_reading_languages_are_searchable(self) -> None:
+        for code in ("zh_hant", "ru", "it", "vi", "th", "id", "hi", "nl", "tr", "uk"):
+            self.assertIn(f"reads_{code}", REGISTRY, f"missing reads_{code}")
+
 
 class EaseOfUseTests(unittest.TestCase):
     """标签再多，设置也得三步点完。"""
@@ -245,9 +256,9 @@ class EaseOfUseTests(unittest.TestCase):
                 len(step["options"]), 20, f"{step['family']} 默认列表太长了"
             )
 
-    def test_setup_is_four_questions_and_all_optional(self) -> None:
+    def test_setup_is_five_questions_and_all_optional(self) -> None:
         steps = quick_setup("zh")
-        self.assertEqual(len(steps), 4)
+        self.assertEqual(len(steps), 5)
         self.assertTrue(all(step["options"] for step in steps))
         # 一个标签都不选也能跑
         blank = replace(PRESETS["d_type"], tags=[])
@@ -264,6 +275,13 @@ class EaseOfUseTests(unittest.TestCase):
             ("吃鸡", "game_pubg"),
             ("mc", "game_minecraft"),
             ("lol", "game_lol"),
+            ("鬼灭", "anime_demon_slayer"),
+            ("三体", "novel_threebody"),
+            ("韩剧", "tv_kdrama"),
+            ("汪苏泷", "music_c_pop"),
+            ("igcse", "edu_igcse"),
+            ("美国", "place_us"),
+            ("越南语", "reads_vi"),
         ):
             ids = [r["id"] for r in search(query)]
             self.assertIn(want, ids, f"搜「{query}」没搜到 {want}")
@@ -286,6 +304,70 @@ class EaseOfUseTests(unittest.TestCase):
                     any("\u4e00" <= ch <= "\u9fff" for ch in opt["label"]),
                     f"CJK leaked into the English label of {opt['id']}",
                 )
+
+
+class MediaAndLifeTagTests(unittest.TestCase):
+    """游戏以外：番/小说/剧/歌/课程/学历/国家/年龄/性别。"""
+
+    def test_anime_title_rolls_up_like_a_game(self) -> None:
+        _, domains = expand({"anime_conan"})
+        self.assertIn("anime", domains)
+        self.assertIn("fandom", domains)  # parent hobby_anime
+
+    def test_webnovel_tag_owns_webnovel_words_not_academic_only(self) -> None:
+        _, domains = expand({"novel_web"})
+        self.assertIn("webnovel", domains)
+        self.assertIn("academic", domains)  # parent hobby_reading
+
+    def test_course_and_topic_grant_the_matching_circle(self) -> None:
+        self.assertIn("tech", parse_tags(["course_cs"]).domains())
+        self.assertIn("psych_pop", parse_tags(["topic_psych"]).domains())
+        self.assertIn("school", parse_tags(["edu_igcse"]).domains())
+
+    def test_age_gender_country_never_grant_vocabulary(self) -> None:
+        for tid in (
+            "age_child", "age_teen", "age_adult",
+            "gender_female", "gender_male", "gender_nb",
+            "place_cn", "place_jp", "place_us", "place_kr",
+        ):
+            _, domains = expand({tid})
+            self.assertEqual(domains, set(), f"{tid} invented {domains}")
+
+    def test_japan_does_not_imply_reading_japanese(self) -> None:
+        processing, domains = expand({"place_jp"})
+        self.assertEqual(domains, set())
+        self.assertNotIn("reads_ja", processing)
+        self.assertEqual(expand({"place_jp"})[0], set())
+
+    def test_young_child_gets_short_concrete_defined_terms(self) -> None:
+        processing, _ = expand({"age_child"})
+        self.assertTrue({"short_chunks", "define_terms", "concrete_first"} <= processing)
+
+    def test_teen_is_not_treated_as_a_child(self) -> None:
+        processing, domains = expand({"age_teen"})
+        self.assertEqual(domains, set())
+        self.assertNotIn("define_terms", processing)
+
+    def test_media_domains_actually_have_words(self) -> None:
+        from clarityime.clarify.paraphrase import jargon_domains
+
+        have = jargon_domains("zh")
+        for domain in ("anime", "webnovel", "film_tv", "idol", "fandom"):
+            self.assertIn(domain, have, f"{domain} has no Chinese jargon rows")
+
+    def test_webnovel_reader_hears_isekai_as_an_analogy(self) -> None:
+        original, _ = preserve_original("这本是异世界金手指爽文")
+        gamer = replace(PRESETS["a_type"], tags=["mbti_entp", "hobby_gaming"])
+        out = adapt_with_report(original, gamer).text
+        self.assertIn("金手指（就像开挂）", out)
+
+    def test_yue_and_traditional_chinese_use_the_chinese_table(self) -> None:
+        from clarityime.clarify.paraphrase import canonical_jargon_lang, simplify_jargon
+
+        self.assertEqual(canonical_jargon_lang("yue"), "zh")
+        self.assertEqual(canonical_jargon_lang("zh_hant"), "zh")
+        text, _ = simplify_jargon("明天 ddl", known_domains=set(), lang="yue")
+        self.assertIn("截止时间", text)
 
 
 class LocalisationTests(unittest.TestCase):

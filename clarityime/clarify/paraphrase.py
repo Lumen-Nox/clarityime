@@ -23,11 +23,14 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from clarityime.clarify.analogy import format_analogy, pick_analogy
+
 __all__ = [
     "Substitution",
     "JARGON_TABLE",
     "JARGON_TABLE_EN",
     "JARGON_TABLES",
+    "canonical_jargon_lang",
     "supported_jargon_langs",
     "AMBIGUOUS_BLOCKLIST",
     "JARGON_TERMS",
@@ -48,7 +51,7 @@ class Substitution:
     kind: str  # jargon | nominal | redundancy | lexicon
 
     def note(self) -> str:
-        prefix = {"jargon": "T1", "nominal": "T2", "redundancy": "T3", "lexicon": "T0"}
+        prefix = {"jargon": "T1", "analogy": "T1a", "nominal": "T2", "redundancy": "T3", "lexicon": "T0"}
         return f"{prefix.get(self.kind, 'T?')}:{self.src}→{self.dst}"
 
 
@@ -133,6 +136,31 @@ JARGON_TABLE: dict[str, tuple[str, str]] = {
     "开荒": ("从零开始建", "sandbox"),
     "科技树": ("升级路线", "strategy_game"),
     "全连": ("一次没断", "rhythm_game"),
+    "开挂": ("用外挂", "gaming"),
+    "主玩": ("主要玩的角色", "gaming"),
+    "隐藏关": ("藏起来的关卡", "gaming"),
+    # -- fandom / idol / anime / webnovel / film_tv --------------------------
+    "入坑": ("开始追这个", "fandom"),
+    "本命": ("最喜欢的那个", "fandom"),
+    "安利": ("强烈推荐", "fandom"),
+    "二创": ("粉丝二次创作", "fandom"),
+    "出道": ("首次公开亮相", "idol"),
+    "打投": ("投票应援", "idol"),
+    "黑粉": ("专门黑的人", "idol"),
+    "补番": ("把没看过的集补完", "anime"),
+    "异世界": ("另一个世界", "anime"),
+    "金手指": ("主角开了外挂", "webnovel"),
+    "穿越": ("到了另一个世界", "webnovel"),
+    "升级流": ("靠不断变强推进剧情", "webnovel"),
+    "爽文": ("读着特别痛快的故事", "webnovel"),
+    "补剧": ("把没看过的集补完", "film_tv"),
+    "烂尾": ("结局很差", "film_tv"),
+    "彩蛋": ("藏着的小细节", "film_tv"),
+    "踩雷": ("碰到雷点", "film_tv"),
+    "剧透": ("先把结局说出来", "film_tv"),
+    # -- school --------------------------------------------------------------
+    "绩点": ("课程平均分", "school"),
+    "GPA": ("课程平均分", "school"),
 }
 
 #: English jargon → (plain English, domain). Same rule as the Chinese table:
@@ -165,6 +193,26 @@ JARGON_TABLE_EN: dict[str, tuple[str, str]] = {
     "pity": ("a guaranteed pull after enough tries", "gacha"),
     "whale": ("someone who spends a lot of money", "gacha"),
     "reroll": ("restart the account for a better first pull", "gacha"),
+    # -- media / school ------------------------------------------------------
+    "isekai": ("a story that starts in another world", "anime"),
+    "golden finger": ("the protagonist's unfair advantage", "webnovel"),
+    "transmigration": ("ending up in another world", "webnovel"),
+    "easter egg": ("a hidden extra", "film_tv"),
+    "GPA": ("grade point average", "school"),
+}
+
+#: Japanese / Korean starters — glosses in that language, same audit bar.
+#: Empty on purpose for fr/de/es/… : the tag is selectable, T1 just no-ops.
+JARGON_TABLE_JA: dict[str, tuple[str, str]] = {
+    "推し": ("いちばん好きな人", "idol"),
+    "沼": ("その作品にどっぷり", "fandom"),
+    "ネタバレ": ("結末を先に言う", "film_tv"),
+}
+
+JARGON_TABLE_KO: dict[str, tuple[str, str]] = {
+    "최애": ("가장 좋아하는 사람", "idol"),
+    "입덕": ("덕질을 시작함", "idol"),
+    "스포": ("결말을 미리 말함", "film_tv"),
 }
 
 #: Every table currently curated, keyed by reading language (`reads_<code>`
@@ -173,18 +221,38 @@ JARGON_TABLE_EN: dict[str, tuple[str, str]] = {
 JARGON_TABLES: dict[str, dict[str, tuple[str, str]]] = {
     "zh": JARGON_TABLE,
     "en": JARGON_TABLE_EN,
+    "ja": JARGON_TABLE_JA,
+    "ko": JARGON_TABLE_KO,
 }
+
+
+def canonical_jargon_lang(lang: str) -> str:
+    """Map a ``reads_*`` code onto a curated table.
+
+    Traditional Chinese and Cantonese share the written-Chinese table.
+    Unknown codes stay as-is so T1 no-ops instead of guessing.
+    """
+    code = (lang or "zh").lower().replace("-", "_")
+    if code in JARGON_TABLES:
+        return code
+    if code.startswith("zh") or code == "yue":
+        return "zh"
+    return code
 
 
 def supported_jargon_langs() -> tuple[str, ...]:
     return tuple(JARGON_TABLES)
+
 
 #: 只收「多字、放在日常句子里不会误伤」的词。
 #: 反例：「毕业」在抽卡圈=练满，在校园=真的毕业；「肝」既是器官也是动词；
 #: 「屠夫」在第五人格是监管者，在生活里是真的屠夫。这类一律不收 —— 一旦收了，
 #: 系统会在错误的语境里把用户的原话改成另一个意思，那比不翻译严重得多。
 AMBIGUOUS_BLOCKLIST: frozenset[str] = frozenset(
-    {"毕业", "肝", "屠夫", "深渊", "宣战", "存档", "判定", "野区", "抽象化"}
+    {
+        "毕业", "肝", "屠夫", "深渊", "宣战", "存档", "判定", "野区", "抽象化",
+        "系统", "打脸", "注水", "CP", "bias", "官宣", "翻车",
+    }
 )
 
 #: Back-compat flat view (term → plain), Chinese table only.
@@ -202,12 +270,12 @@ _JARGON_SCAN: dict[str, "re.Pattern[str]"] = {
 
 
 def count_jargon(text: str, lang: str = "zh") -> int:
-    scan = _JARGON_SCAN.get(lang)
+    scan = _JARGON_SCAN.get(canonical_jargon_lang(lang))
     return len(scan.findall(text)) if scan else 0
 
 
 def jargon_domains(lang: str = "zh") -> set[str]:
-    table = JARGON_TABLES.get(lang, {})
+    table = JARGON_TABLES.get(canonical_jargon_lang(lang), {})
     return {domain for _, domain in table.values()}
 
 
@@ -215,7 +283,7 @@ def domain_of(term: str, lang: str = "zh") -> str | None:
     """Which domain a jargon *term* (the ``src`` of a T1 substitution) belongs
     to, for attributing feedback back to a domain. ``None`` if not a jargon
     table entry (e.g. T2/T3 substitutions carry no domain)."""
-    table = JARGON_TABLES.get(lang, {})
+    table = JARGON_TABLES.get(canonical_jargon_lang(lang), {})
     entry = table.get(term)
     return entry[1] if entry else None
 
@@ -263,24 +331,35 @@ def simplify_jargon(
 ) -> tuple[str, list[Substitution]]:
     """Swap a term only when the listener has NOT declared that term's domain.
 
-    ``known_domains`` comes straight from the listener's declared domain tags.
-    A term in a domain they own is left alone (audience design, Clark & Murphy
-    1982): translating 「排期」for someone tagged ``business`` makes it *harder*.
+    Preference order (mix analogies into daily output):
+      1. listener owns this domain → leave the term
+      2. listener owns a *different* domain with an audited analog →
+         ``守椅（就像架点）`` (T1a)
+      3. otherwise → plain-language gloss from this language's table (T1)
 
-    ``lang`` picks which curated table to scan (the speaker's reading
-    language, ``reads_<lang>``) — never auto-translated between languages.
+    ``known_domains`` comes straight from the listener's declared domain tags
+    plus auto-learned ones. A term in a domain they own is left alone
+    (audience design, Clark & Murphy 1982).
     """
     if knows_jargon:  # legacy switch: treat as owning every domain
         return text, []
-    table = JARGON_TABLES.get(lang)
+    table_lang = canonical_jargon_lang(lang)
+    table = JARGON_TABLES.get(table_lang)
     if not table:
         return text, []
     owned = frozenset(known_domains or ())
     subs: list[Substitution] = []
     out = text
-    for term in _JARGON_ORDER[lang]:
+    for term in _JARGON_ORDER[table_lang]:
         dst, domain = table[term]
         if domain in owned or term not in out:
+            continue
+        analog = pick_analogy(term, src_domain=domain, owned=owned, lang=table_lang)
+        if analog:
+            _dest_domain, analog_term = analog
+            packed = format_analogy(term, analog_term, table_lang)
+            out = out.replace(term, packed)
+            subs.append(Substitution(term, packed, "analogy"))
             continue
         out = out.replace(term, dst)
         subs.append(Substitution(term, dst, "jargon"))
