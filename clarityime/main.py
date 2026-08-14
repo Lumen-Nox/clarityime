@@ -59,6 +59,23 @@ def cmd_demo(_args: argparse.Namespace) -> int:
         console.print(f"[dim]  ops: {op_tags}[/]")
         console.print("")
 
+    from dataclasses import replace
+
+    circle = "监管者一直守椅，听到结果我破防了"
+    outsider = get_listener_preset("analytical")
+    assert outsider is not None
+    classmate = replace(outsider, tags=list(outsider.tags) + ["game_valorant", "topic_memes"])
+    console.print("[cyan]Same sentence · two classmates[/]")
+    console.print(circle)
+    for who, label in (
+        (outsider, "Adapted · classmate with no game / meme tags"),
+        (classmate, "Adapted · classmate who plays FPS and follows memes"),
+    ):
+        adapted, _notes, _before, _after = adapt_with_report(circle, who)
+        console.print(f"[green]{label}[/]")
+        console.print(adapted)
+        console.print("")
+
     console.print(
         "[dim]Same propositions · no summarization · fully offline[/]"
     )

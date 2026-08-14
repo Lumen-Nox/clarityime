@@ -40,7 +40,7 @@ Budgets follow Cowan (2001) and Sweller (1988). Invariants (no new content, no l
 
 Public preset names: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved contact carries its own tag set instead.
 
-## What is in this version (0.6.1)
+## What is in this version (0.6.5)
 
 | Piece | What a judge can check |
 |---|---|
@@ -51,6 +51,7 @@ Public preset names: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A save
 | Contact learning | Count ratings per contact. Threshold **3**, no LLM. Same evidence → same outcome. |
 | Share link | `encode` / `decode` round-trip in tests. The viewer page at `clarityime.app` is **not deployed yet**; the fragment protocol is real. |
 | Determinism | `tests/test_determinism.py` AST-scans `clarify/` for `random` / HTTP / LLM imports. |
+| Demo contrast | `clarityime demo` now prints the same sentence for two classmates: no game/meme tags → plain gloss; FPS + memes → `守椅（就像架点）` and the speaker's `破防`. |
 
 ## Quick start
 
