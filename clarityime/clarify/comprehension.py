@@ -253,9 +253,20 @@ def claim_first(clauses: list[str], notes: list[str]) -> list[str]:
 
 VALUE_CUES: dict[str, tuple[str, ...]] = {
     "precision": ("数据", "成本", "格式", "错误", "风险", "问题", "接口", "指标"),
-    "warmth": ("觉得", "感觉", "希望", "担心", "士气", "累", "难", "开心", "抱歉"),
+    "warmth": (
+        "觉得", "感觉", "希望", "担心", "士气", "累", "难", "开心", "抱歉",
+        "难受", "委屈", "害怕", "失望", "心累", "紧张", "生气", "遗憾", "着急",
+    ),
     "efficiency": ("时间", "截止", "来不及", "赶", "快", "慢", "周期", "排期", "天"),
 }
+
+#: Fi / Fe / high agreeableness: stance or feeling clauses lead
+#: (Reis 2017: feeling understood ≠ proposition correctness;
+#: van Berkum 2009: value words enter early semantic integration).
+AFFECT_LEAD: tuple[str, ...] = (
+    "我觉得", "我感觉", "担心", "害怕", "难受", "委屈", "失望", "心累",
+    "开心", "抱歉", "着急", "紧张", "生气", "遗憾", "希望",
+)
 
 
 SEQUENCE_PREFIXES = ("首先", "其次", "然后", "接着", "之后", "最后", "先", "再")
@@ -264,7 +275,13 @@ SEQUENCE_PREFIXES = ("首先", "其次", "然后", "接着", "之后", "最后",
 _CONCRETE = re.compile(r"\d|上次|昨天|今天|明天|上周|例如|比如|这次|那次")
 
 
-def _affinity(clause: str, weights: dict[str, float], *, concrete_first: bool = False) -> float:
+def _affinity(
+    clause: str,
+    weights: dict[str, float],
+    *,
+    concrete_first: bool = False,
+    affect_first: bool = False,
+) -> float:
     score = 0.0
     for dim, cues in VALUE_CUES.items():
         hits = sum(1 for c in cues if c in clause)
@@ -275,6 +292,8 @@ def _affinity(clause: str, weights: dict[str, float], *, concrete_first: bool = 
         # Se-dominant / low-openness listeners anchor on the concrete instance
         # before they will process the abstraction (Paivio 1971, dual coding).
         score += 2.0
+    if affect_first and any(cue in clause for cue in AFFECT_LEAD):
+        score += 2.0
     return score
 
 
@@ -284,6 +303,7 @@ def order_supports(
     notes: list[str],
     *,
     concrete_first: bool = False,
+    affect_first: bool = False,
 ) -> list[str]:
     """A8 — among *supporting* clauses only, lead with what this listener weighs.
 
@@ -298,7 +318,13 @@ def order_supports(
         if len(slots) < 2:
             continue
         ranked = sorted(
-            slots, key=lambda i: -_affinity(clauses[i], weights, concrete_first=concrete_first)
+            slots,
+            key=lambda i: -_affinity(
+                clauses[i],
+                weights,
+                concrete_first=concrete_first,
+                affect_first=affect_first,
+            ),
         )
         if ranked == slots:
             continue
@@ -307,7 +333,12 @@ def order_supports(
         changed = True
     if not changed:
         return clauses
-    notes.append("A8:concrete_first" if concrete_first else "A8:value_order")
+    if affect_first:
+        notes.append("A8:affect_first")
+    elif concrete_first:
+        notes.append("A8:concrete_first")
+    else:
+        notes.append("A8:value_order")
     return out
 
 

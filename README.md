@@ -40,12 +40,13 @@ Budgets follow Cowan (2001) and Sweller (1988). Invariants (no new content, no l
 
 Public preset names: `analytical`, `warm_flow`, `fast_scan`, `narrative`. A saved contact carries its own tag set instead.
 
-## What is in this version (0.6.0)
+## What is in this version (0.6.1)
 
 | Piece | What a judge can check |
 |---|---|
 | Tag registry | 17 families, ~310 bilingual tags. Personality **never** implies domain knowledge. **edu / topic** grant study-circle vocabulary; **age / gender / place never** grant words or pick a language. |
 | Cross-circle analogies | Audited 1:1 table in `clarify/analogy.py`. A listener who owns FPS hears `守椅（就像架点）` — same proposition, their word. No owned analog → plain T1 jargon. No LLM. |
+| Affect-first layout | Fi / Fe / high-agreeableness listeners see stance or feeling clauses before logistics (`A8a`). Same propositions, different order. |
 | Jargon table | Fixed local substitutions in `clarify/paraphrase.py`. Circle-insiders keep the term. |
 | Contact learning | Count ratings per contact. Threshold **3**, no LLM. Same evidence → same outcome. |
 | Share link | `encode` / `decode` round-trip in tests. The viewer page at `clarityime.app` is **not deployed yet**; the fragment protocol is real. |

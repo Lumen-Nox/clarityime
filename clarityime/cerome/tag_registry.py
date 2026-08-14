@@ -116,6 +116,9 @@ _t("concrete_first", "processing", "先给具体例子", "concrete first",
    "带数字/实例的句子提前", "clauses with numbers or instances lead")
 _t("define_terms", "processing", "术语一律解释", "always define terms",
    "不管懂不懂都换成白话", "translate jargon regardless of domain")
+_t("affect_first", "processing", "情绪/立场先看见", "affect first",
+   "带担心/觉得/难受的小句提前，语气不能被后勤细节埋掉",
+   "clauses that carry stance or feeling lead, so tone is not buried")
 
 # --------------------------------------------------------------------------- #
 # FUNCTION — 八维. The mechanism behind the MBTI mapping.
@@ -134,9 +137,9 @@ _FUNC = {
            "要内部逻辑自洽", "checks internal consistency"),
     "Te": ("外倾思考", "Extraverted Thinking", ("conclusion_first", "no_padding"),
            "先要结论和可执行项", "wants the conclusion and the action"),
-    "Fi": ("内倾情感", "Introverted Feeling", ("tone_visible",),
+    "Fi": ("内倾情感", "Introverted Feeling", ("tone_visible", "affect_first"),
            "语气就是信息本身", "tone is part of the message"),
-    "Fe": ("外倾情感", "Extraverted Feeling", ("tone_visible", "context_first"),
+    "Fe": ("外倾情感", "Extraverted Feeling", ("tone_visible", "context_first", "affect_first"),
            "关注关系和场面", "tracks the relational frame"),
 }
 for _fid, (_z, _e, _imp, _nz, _ne) in _FUNC.items():
@@ -207,11 +210,11 @@ _BIG5 = [
      "节奏快，短行更跟得上", "fast pace, short lines keep up"),
     ("extravert_low", "外向性低", "Low extraversion", ("long_chunks",),
      "愿意慢慢读完整段", "will read a full paragraph"),
-    ("agreeable_high", "宜人性高", "High agreeableness", ("tone_visible",),
+    ("agreeable_high", "宜人性高", "High agreeableness", ("tone_visible", "affect_first"),
      "语气缺失会读成冷淡", "missing tone reads as coldness"),
     ("agreeable_low", "宜人性低", "Low agreeableness", ("no_padding", "conclusion_first"),
      "客套会被当噪音", "social padding reads as noise"),
-    ("neurotic_high", "神经质高", "High neuroticism", ("tone_visible", "short_chunks"),
+    ("neurotic_high", "神经质高", "High neuroticism", ("tone_visible", "short_chunks", "affect_first"),
      "信息量大会焦虑，语气很重要", "load raises anxiety; tone matters"),
     ("neurotic_low", "神经质低", "Low neuroticism", (), "", ""),
 ]
@@ -224,14 +227,14 @@ for _id, _z, _e, _imp, _nz, _ne in _BIG5:
 
 _ENNEA = [
     ("1", "完美型", "Reformer", ("cause_explicit",)),
-    ("2", "助人型", "Helper", ("tone_visible",)),
+    ("2", "助人型", "Helper", ("tone_visible", "affect_first")),
     ("3", "成就型", "Achiever", ("conclusion_first", "no_padding")),
-    ("4", "自我型", "Individualist", ("tone_visible", "context_first")),
+    ("4", "自我型", "Individualist", ("tone_visible", "context_first", "affect_first")),
     ("5", "思考型", "Investigator", ("cause_explicit", "long_chunks")),
     ("6", "怀疑型", "Loyalist", ("cause_explicit", "sequence_explicit")),
     ("7", "活跃型", "Enthusiast", ("short_chunks",)),
     ("8", "领袖型", "Challenger", ("conclusion_first", "no_padding")),
-    ("9", "和平型", "Peacemaker", ("tone_visible", "context_first")),
+    ("9", "和平型", "Peacemaker", ("tone_visible", "context_first", "affect_first")),
 ]
 for _n, _z, _e, _imp in _ENNEA:
     _t(f"ennea_{_n}", "enneagram", f"{_n}号·{_z}", f"Type {_n} · {_e}", implies=_imp)

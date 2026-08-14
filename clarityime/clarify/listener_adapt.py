@@ -67,6 +67,7 @@ class ListenerPlan:
     keep_tone: bool = True
     sequence_explicit: bool = False
     concrete_first: bool = False
+    affect_first: bool = False
     capacity: int = 26
     known_domains: frozenset[str] = frozenset()
     #: Which curated jargon table to scan — the listener's declared reading
@@ -95,6 +96,8 @@ class ListenerPlan:
             out.append("A8")
         if self.sequence_explicit:
             out.append("A9")
+        if self.affect_first:
+            out.append("A8a")
         return out
 
 
@@ -139,6 +142,7 @@ def plan_from_tags(
         value_order=tags.has("value_order"),
         sequence_explicit=tags.has("sequence_explicit"),
         concrete_first=tags.has("concrete_first"),
+        affect_first=tags.has("affect_first"),
         # T1 fires per-domain: a term is translated only if its domain is unowned
         simplify_jargon=bool(set(jargon_domains(reading_lang)) - set(domains)),
         keep_tone=not tags.has("no_padding"),
@@ -250,7 +254,11 @@ def adapt_with_report(
         clauses = claim_first(clauses, notes)
     if plan.value_order:
         clauses = order_supports(
-            clauses, plan.weights, notes, concrete_first=plan.concrete_first
+            clauses,
+            plan.weights,
+            notes,
+            concrete_first=plan.concrete_first,
+            affect_first=plan.affect_first,
         )
 
     if plan.flow:
