@@ -6,6 +6,8 @@ Speak or type, then ClarityIME rearranges the same propositions so the *listener
 
 This is the public repository for GOAI 2026 Boundless Agents (AI + Education). Apache-2.0. Author: **Lumen**. Judge map: [docs/GOAI_2026.md](docs/GOAI_2026.md).
 
+Not a chatbot. Not tone polish. Topic 4 claim a judge can run: `clarityime demo` shows the same sentence for two classmates.
+
 https://github.com/Lumen-Nox/clarityime
 
 ## How it works
